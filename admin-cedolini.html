@@ -448,10 +448,11 @@
                         <th>Username</th>
                         <th>Ultimo Accesso</th>
                         <th>Stato</th>
+                        <th>Azioni</th>
                     </tr>
                 </thead>
                 <tbody id="credenzialiList">
-                    <tr><td colspan="5" style="text-align:center;">Caricamento...</td></tr>
+                    <tr><td colspan="6" style="text-align:center;">Caricamento...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -480,6 +481,28 @@
                 <button type="submit" class="btn-primary">✅ Crea Credenziali</button>
             </form>
             <div id="credMessage" style="margin-top:20px;"></div>
+        </div>
+    </div>
+
+    <!-- Modal Reset Password -->
+    <div id="resetPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeResetPasswordModal()">&times;</span>
+            <h2>🔒 Reset Password Dipendente</h2>
+            <p style="color:#666;margin-bottom:20px;">Imposta una nuova password per <strong id="resetDipendenteName"></strong></p>
+            <form id="resetPasswordForm">
+                <input type="hidden" id="resetDipendenteId">
+                <div class="form-group">
+                    <label>Nuova Password</label>
+                    <input type="password" id="resetNewPassword" required placeholder="Minimo 6 caratteri" minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Conferma Nuova Password</label>
+                    <input type="password" id="resetConfirmPassword" required placeholder="Ripeti la password" minlength="6">
+                </div>
+                <button type="submit" class="btn-primary">🔄 Reset Password</button>
+            </form>
+            <div id="resetMessage" style="margin-top:20px;"></div>
         </div>
     </div>
 
@@ -676,7 +699,7 @@
         // Credenziali Management
         async function loadCredenziali() {
             const tbody = document.getElementById('credenzialiList');
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Caricamento...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Caricamento...</td></tr>';
 
             try {
                 const res = await fetch(`${API_BASE}/api/credenziali/lista`);
@@ -693,10 +716,15 @@
                                 ? '<span class="badge badge-success">Attivo</span>'
                                 : '<span class="badge badge-warning">No credenziali</span>'}
                         </td>
+                        <td>
+                            ${d.username
+                                ? `<button class="btn-primary" style="padding:6px 12px;font-size:12px;" onclick="openResetPasswordModal(${d.id}, '${d.nome}')">🔄 Reset Password</button>`
+                                : '-'}
+                        </td>
                     </tr>
                 `).join('');
             } catch (error) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:red;">Errore caricamento</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Errore caricamento</td></tr>';
             }
         }
 
@@ -709,6 +737,65 @@
             document.getElementById('credenzialiForm').reset();
             document.getElementById('credMessage').innerHTML = '';
         }
+
+        // Reset Password Functions
+        function openResetPasswordModal(dipendenteId, nome) {
+            document.getElementById('resetDipendenteId').value = dipendenteId;
+            document.getElementById('resetDipendenteName').textContent = nome;
+            document.getElementById('resetPasswordModal').style.display = 'block';
+        }
+
+        function closeResetPasswordModal() {
+            document.getElementById('resetPasswordModal').style.display = 'none';
+            document.getElementById('resetPasswordForm').reset();
+            document.getElementById('resetMessage').innerHTML = '';
+        }
+
+        document.getElementById('resetPasswordForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const newPassword = document.getElementById('resetNewPassword').value;
+            const confirmPassword = document.getElementById('resetConfirmPassword').value;
+            const dipendenteId = document.getElementById('resetDipendenteId').value;
+            const messageDiv = document.getElementById('resetMessage');
+
+            if (newPassword !== confirmPassword) {
+                messageDiv.innerHTML = '<div class="alert alert-error">❌ Le password non corrispondono</div>';
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                messageDiv.innerHTML = '<div class="alert alert-error">❌ La password deve essere di almeno 6 caratteri</div>';
+                return;
+            }
+
+            messageDiv.innerHTML = '<div class="alert alert-success">Reset in corso...</div>';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        dipendente_id: dipendenteId,
+                        nuova_password: newPassword
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    messageDiv.innerHTML = '<div class="alert alert-success">✅ Password resettata con successo!</div>';
+                    document.getElementById('resetPasswordForm').reset();
+                    setTimeout(() => {
+                        closeResetPasswordModal();
+                    }, 1500);
+                } else {
+                    messageDiv.innerHTML = `<div class="alert alert-error">❌ ${data.error}</div>`;
+                }
+            } catch (error) {
+                messageDiv.innerHTML = '<div class="alert alert-error">❌ Errore di connessione</div>';
+            }
+        });
 
         document.getElementById('credenzialiForm').addEventListener('submit', async function(e) {
             e.preventDefault();

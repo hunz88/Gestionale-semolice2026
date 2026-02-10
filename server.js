@@ -1001,6 +1001,42 @@ app.post('/api/dipendente/cambio-password', async (req, res) => {
     );
 });
 
+// Reset password da parte dell'admin (senza conoscere la vecchia password)
+app.post('/api/admin/reset-password', async (req, res) => {
+    const { dipendente_id, nuova_password } = req.body;
+
+    if (!dipendente_id || !nuova_password) {
+        return res.status(400).json({ error: 'Dati mancanti' });
+    }
+
+    if (nuova_password.length < 6) {
+        return res.status(400).json({ error: 'La password deve essere di almeno 6 caratteri' });
+    }
+
+    try {
+        // Hash nuova password
+        const password_hash = await bcrypt.hash(nuova_password, 10);
+
+        db.run(
+            `UPDATE credenziali_dipendenti SET password_hash = ? WHERE dipendente_id = ?`,
+            [password_hash, dipendente_id],
+            function(err) {
+                if (err) {
+                    return res.status(500).json({ error: err.message });
+                }
+
+                if (this.changes === 0) {
+                    return res.status(404).json({ error: 'Credenziali non trovate per questo dipendente' });
+                }
+
+                res.json({ success: true, message: 'Password resettata con successo' });
+            }
+        );
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Lista dipendenti con credenziali (admin)
 app.get('/api/credenziali/lista', (req, res) => {
     db.all(
