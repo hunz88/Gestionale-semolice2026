@@ -2,6 +2,9 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const path = require('path');
+const multer = require('multer');
+const bcrypt = require('bcryptjs');
+const fs = require('fs');
 
 const app = express();
 const PORT = 4052;
@@ -12,6 +15,77 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.static(__dirname));
+
+// ========================================
+// CONFIGURAZIONE UPLOAD FILE
+// ========================================
+const uploadsDir = path.join(__dirname, 'uploads');
+const cedoliniDir = path.join(uploadsDir, 'cedolini');
+const dipendentiDir = path.join(uploadsDir, 'dipendenti');
+
+// Crea le directory se non esistono
+[uploadsDir, cedoliniDir, dipendentiDir].forEach(dir => {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+});
+
+// Configurazione Multer per upload cedolini (admin)
+const storageCedolini = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dipendenteId = req.body.dipendente_id;
+        const dir = path.join(cedoliniDir, dipendenteId.toString());
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+        const timestamp = Date.now();
+        const ext = path.extname(file.originalname);
+        cb(null, `${timestamp}_${file.originalname}`);
+    }
+});
+
+// Configurazione Multer per upload dipendenti
+const storageDipendenti = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dipendenteId = req.body.dipendente_id || req.session?.dipendente_id;
+        const dir = path.join(dipendentiDir, dipendenteId.toString());
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+        const timestamp = Date.now();
+        const ext = path.extname(file.originalname);
+        cb(null, `${timestamp}_${file.originalname}`);
+    }
+});
+
+const uploadCedolini = multer({
+    storage: storageCedolini,
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'application/pdf') {
+            cb(null, true);
+        } else {
+            cb(new Error('Solo file PDF sono ammessi per i cedolini'));
+        }
+    }
+});
+
+const uploadDipendenti = multer({
+    storage: storageDipendenti,
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Solo PDF e immagini (JPG, PNG) sono ammessi'));
+        }
+    }
+});
 
 const dbPath = path.join(__dirname, 'gestionale.db');
 const db = new sqlite3.Database(dbPath);
@@ -100,6 +174,49 @@ db.serialize(() => {
         note TEXT,
         FOREIGN KEY (task_id) REFERENCES tasks(id),
         FOREIGN KEY (turno_id) REFERENCES turni(id)
+    )`);
+
+    // ========================================
+    // NUOVE TABELLE PER CEDOLINI E AREA DIPENDENTI
+    // ========================================
+
+    // Tabella credenziali dipendenti per accesso portale
+    db.run(`CREATE TABLE IF NOT EXISTS credenziali_dipendenti (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        dipendente_id INTEGER NOT NULL UNIQUE,
+        username TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        ultimo_accesso DATETIME,
+        creato_il DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (dipendente_id) REFERENCES dipendenti(id)
+    )`);
+
+    // Tabella cedolini caricati dall'admin
+    db.run(`CREATE TABLE IF NOT EXISTS cedolini_files (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        dipendente_id INTEGER NOT NULL,
+        filename TEXT NOT NULL,
+        filepath TEXT NOT NULL,
+        filesize INTEGER NOT NULL,
+        anno INTEGER NOT NULL,
+        mese INTEGER NOT NULL,
+        descrizione TEXT,
+        caricato_da TEXT DEFAULT 'admin',
+        caricato_il DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (dipendente_id) REFERENCES dipendenti(id)
+    )`);
+
+    // Tabella file caricati dai dipendenti nella loro area personale
+    db.run(`CREATE TABLE IF NOT EXISTS dipendenti_uploads (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        dipendente_id INTEGER NOT NULL,
+        filename TEXT NOT NULL,
+        filepath TEXT NOT NULL,
+        filesize INTEGER NOT NULL,
+        tipo TEXT NOT NULL,
+        descrizione TEXT,
+        caricato_il DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (dipendente_id) REFERENCES dipendenti(id)
     )`);
 });
 
@@ -759,9 +876,400 @@ app.get('/api/turni/giorno/:data', (req, res) => {
 });
 // ==================== FINE API TURNI GIORNO ====================
 
+// ========================================
+// API GESTIONE CREDENZIALI DIPENDENTI
+// ========================================
+
+// Crea credenziali per un dipendente (admin)
+app.post('/api/credenziali/crea', async (req, res) => {
+    const { dipendente_id, username, password } = req.body;
+
+    if (!dipendente_id || !username || !password) {
+        return res.status(400).json({ error: 'Dati mancanti' });
+    }
+
+    try {
+        // Hash della password
+        const password_hash = await bcrypt.hash(password, 10);
+
+        db.run(
+            `INSERT INTO credenziali_dipendenti (dipendente_id, username, password_hash) VALUES (?, ?, ?)`,
+            [dipendente_id, username, password_hash],
+            function(err) {
+                if (err) {
+                    if (err.message.includes('UNIQUE')) {
+                        return res.status(400).json({ error: 'Username o dipendente già esistente' });
+                    }
+                    return res.status(500).json({ error: err.message });
+                }
+                res.json({ success: true, id: this.lastID });
+            }
+        );
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Login dipendente
+app.post('/api/dipendente/login', async (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Username e password richiesti' });
+    }
+
+    db.get(
+        `SELECT c.*, d.nome, d.ruolo
+         FROM credenziali_dipendenti c
+         JOIN dipendenti d ON c.dipendente_id = d.id
+         WHERE c.username = ? AND d.attivo = 1`,
+        [username],
+        async (err, row) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+
+            if (!row) {
+                return res.status(401).json({ error: 'Credenziali non valide' });
+            }
+
+            // Verifica password
+            const match = await bcrypt.compare(password, row.password_hash);
+
+            if (!match) {
+                return res.status(401).json({ error: 'Credenziali non valide' });
+            }
+
+            // Aggiorna ultimo accesso
+            db.run(
+                `UPDATE credenziali_dipendenti SET ultimo_accesso = CURRENT_TIMESTAMP WHERE id = ?`,
+                [row.id]
+            );
+
+            res.json({
+                success: true,
+                dipendente_id: row.dipendente_id,
+                username: row.username,
+                nome: row.nome,
+                ruolo: row.ruolo
+            });
+        }
+    );
+});
+
+// Cambio password dipendente
+app.post('/api/dipendente/cambio-password', async (req, res) => {
+    const { dipendente_id, vecchia_password, nuova_password } = req.body;
+
+    if (!dipendente_id || !vecchia_password || !nuova_password) {
+        return res.status(400).json({ error: 'Dati mancanti' });
+    }
+
+    db.get(
+        `SELECT * FROM credenziali_dipendenti WHERE dipendente_id = ?`,
+        [dipendente_id],
+        async (err, row) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+
+            if (!row) {
+                return res.status(404).json({ error: 'Credenziali non trovate' });
+            }
+
+            // Verifica vecchia password
+            const match = await bcrypt.compare(vecchia_password, row.password_hash);
+
+            if (!match) {
+                return res.status(401).json({ error: 'Vecchia password errata' });
+            }
+
+            // Hash nuova password
+            const new_hash = await bcrypt.hash(nuova_password, 10);
+
+            db.run(
+                `UPDATE credenziali_dipendenti SET password_hash = ? WHERE dipendente_id = ?`,
+                [new_hash, dipendente_id],
+                function(err) {
+                    if (err) {
+                        return res.status(500).json({ error: err.message });
+                    }
+                    res.json({ success: true });
+                }
+            );
+        }
+    );
+});
+
+// Lista dipendenti con credenziali (admin)
+app.get('/api/credenziali/lista', (req, res) => {
+    db.all(
+        `SELECT d.id, d.nome, d.ruolo, c.username, c.ultimo_accesso, c.creato_il
+         FROM dipendenti d
+         LEFT JOIN credenziali_dipendenti c ON d.id = c.dipendente_id
+         WHERE d.attivo = 1
+         ORDER BY d.nome`,
+        (err, rows) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            res.json(rows);
+        }
+    );
+});
+
+// ========================================
+// API ADMIN - UPLOAD CEDOLINI
+// ========================================
+
+// Upload cedolino PDF (admin)
+app.post('/api/admin/upload-cedolino', uploadCedolini.single('cedolino'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'Nessun file caricato' });
+    }
+
+    const { dipendente_id, anno, mese, descrizione } = req.body;
+
+    if (!dipendente_id || !anno || !mese) {
+        // Rimuovi file caricato se i dati sono incompleti
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ error: 'Dati mancanti: dipendente_id, anno, mese richiesti' });
+    }
+
+    db.run(
+        `INSERT INTO cedolini_files (dipendente_id, filename, filepath, filesize, anno, mese, descrizione)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+            dipendente_id,
+            req.file.originalname,
+            req.file.path,
+            req.file.size,
+            anno,
+            mese,
+            descrizione || null
+        ],
+        function(err) {
+            if (err) {
+                // Rimuovi file se inserimento DB fallisce
+                fs.unlinkSync(req.file.path);
+                return res.status(500).json({ error: err.message });
+            }
+            res.json({
+                success: true,
+                id: this.lastID,
+                filename: req.file.originalname,
+                size: req.file.size
+            });
+        }
+    );
+});
+
+// Lista cedolini per dipendente (admin o dipendente)
+app.get('/api/cedolini/:dipendente_id', (req, res) => {
+    db.all(
+        `SELECT c.*, d.nome as dipendente_nome
+         FROM cedolini_files c
+         JOIN dipendenti d ON c.dipendente_id = d.id
+         WHERE c.dipendente_id = ?
+         ORDER BY c.anno DESC, c.mese DESC`,
+        [req.params.dipendente_id],
+        (err, rows) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            // Rimuovi il filepath completo per sicurezza
+            const sanitized = rows.map(r => ({
+                ...r,
+                filepath: undefined,
+                download_url: `/api/cedolini/download/${r.id}`
+            }));
+            res.json(sanitized);
+        }
+    );
+});
+
+// Download cedolino PDF
+app.get('/api/cedolini/download/:id', (req, res) => {
+    db.get(
+        `SELECT * FROM cedolini_files WHERE id = ?`,
+        [req.params.id],
+        (err, row) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+
+            if (!row) {
+                return res.status(404).json({ error: 'Cedolino non trovato' });
+            }
+
+            // Verifica che il file esista
+            if (!fs.existsSync(row.filepath)) {
+                return res.status(404).json({ error: 'File non trovato sul server' });
+            }
+
+            res.download(row.filepath, row.filename);
+        }
+    );
+});
+
+// Elimina cedolino (admin)
+app.delete('/api/admin/cedolino/:id', (req, res) => {
+    db.get(
+        `SELECT * FROM cedolini_files WHERE id = ?`,
+        [req.params.id],
+        (err, row) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+
+            if (!row) {
+                return res.status(404).json({ error: 'Cedolino non trovato' });
+            }
+
+            // Elimina file dal filesystem
+            if (fs.existsSync(row.filepath)) {
+                fs.unlinkSync(row.filepath);
+            }
+
+            // Elimina record dal database
+            db.run(
+                `DELETE FROM cedolini_files WHERE id = ?`,
+                [req.params.id],
+                function(err) {
+                    if (err) {
+                        return res.status(500).json({ error: err.message });
+                    }
+                    res.json({ success: true });
+                }
+            );
+        }
+    );
+});
+
+// ========================================
+// API DIPENDENTE - UPLOAD FILE PERSONALI
+// ========================================
+
+// Upload file personale (dipendente)
+app.post('/api/dipendente/upload-file', uploadDipendenti.single('file'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'Nessun file caricato' });
+    }
+
+    const { dipendente_id, descrizione } = req.body;
+
+    if (!dipendente_id) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ error: 'dipendente_id richiesto' });
+    }
+
+    db.run(
+        `INSERT INTO dipendenti_uploads (dipendente_id, filename, filepath, filesize, tipo, descrizione)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+            dipendente_id,
+            req.file.originalname,
+            req.file.path,
+            req.file.size,
+            req.file.mimetype,
+            descrizione || null
+        ],
+        function(err) {
+            if (err) {
+                fs.unlinkSync(req.file.path);
+                return res.status(500).json({ error: err.message });
+            }
+            res.json({
+                success: true,
+                id: this.lastID,
+                filename: req.file.originalname,
+                size: req.file.size
+            });
+        }
+    );
+});
+
+// Lista file caricati dal dipendente
+app.get('/api/dipendente/files/:dipendente_id', (req, res) => {
+    db.all(
+        `SELECT id, filename, filesize, tipo, descrizione, caricato_il
+         FROM dipendenti_uploads
+         WHERE dipendente_id = ?
+         ORDER BY caricato_il DESC`,
+        [req.params.dipendente_id],
+        (err, rows) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            res.json(rows);
+        }
+    );
+});
+
+// Download file personale dipendente
+app.get('/api/dipendente/download/:id', (req, res) => {
+    db.get(
+        `SELECT * FROM dipendenti_uploads WHERE id = ?`,
+        [req.params.id],
+        (err, row) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+
+            if (!row) {
+                return res.status(404).json({ error: 'File non trovato' });
+            }
+
+            if (!fs.existsSync(row.filepath)) {
+                return res.status(404).json({ error: 'File non trovato sul server' });
+            }
+
+            res.download(row.filepath, row.filename);
+        }
+    );
+});
+
+// Elimina file personale dipendente
+app.delete('/api/dipendente/file/:id', (req, res) => {
+    const { dipendente_id } = req.body;
+
+    db.get(
+        `SELECT * FROM dipendenti_uploads WHERE id = ? AND dipendente_id = ?`,
+        [req.params.id, dipendente_id],
+        (err, row) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+
+            if (!row) {
+                return res.status(404).json({ error: 'File non trovato' });
+            }
+
+            // Elimina file dal filesystem
+            if (fs.existsSync(row.filepath)) {
+                fs.unlinkSync(row.filepath);
+            }
+
+            // Elimina record dal database
+            db.run(
+                `DELETE FROM dipendenti_uploads WHERE id = ?`,
+                [req.params.id],
+                function(err) {
+                    if (err) {
+                        return res.status(500).json({ error: err.message });
+                    }
+                    res.json({ success: true });
+                }
+            );
+        }
+    );
+});
+
 app.listen(PORT, () => {
     console.log('🚀 SERVER AVVIATO: http://localhost:' + PORT);
     console.log('📋 Gestionale Turni: http://localhost:' + PORT + '/index.html');
     console.log('✅ Checklist Dipendenti: http://localhost:' + PORT + '/checklist.html');
     console.log('🔧 Admin Checklist: http://localhost:' + PORT + '/admin-tasks.html');
+    console.log('📄 Admin Cedolini: http://localhost:' + PORT + '/admin-cedolini.html');
+    console.log('👤 Portale Dipendente: http://localhost:' + PORT + '/portale-dipendente.html');
 });

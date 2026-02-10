@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Gestione Cedolini</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* Login Screen */
+        #loginScreen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .login-box h1 {
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .pin-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 24px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            letter-spacing: 10px;
+            margin-bottom: 20px;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .login-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Main App */
+        #mainApp {
+            display: none;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #d32f2f;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            background: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .upload-section {
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            background: #f8f9ff;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group select,
+        .form-group input[type="number"],
+        .form-group input[type="text"],
+        .form-group input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+
+        .cedolini-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .cedolini-table th,
+        .cedolini-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .cedolini-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .cedolini-table tr:hover {
+            background: #f8f9ff;
+        }
+
+        .credenziali-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .credenziali-table th,
+        .credenziali-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .credenziali-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ff9800;
+            color: white;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .close-modal {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .close-modal:hover {
+            color: #000;
+        }
+
+        .file-info {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen">
+        <div class="login-box">
+            <h1>🔐 Admin - Cedolini</h1>
+            <input type="password" id="pinInput" class="pin-input" placeholder="Inserisci PIN" maxlength="6">
+            <button class="login-btn" onclick="checkPin()">Accedi</button>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp">
+        <div class="header">
+            <h1>📄 Gestione Cedolini Paga</h1>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('upload')">📤 Carica Cedolini</button>
+            <button class="tab" onclick="showTab('lista')">📋 Lista Cedolini</button>
+            <button class="tab" onclick="showTab('credenziali')">🔑 Gestione Credenziali</button>
+        </div>
+
+        <!-- Tab Upload Cedolini -->
+        <div id="uploadTab" class="tab-content active">
+            <h2>Carica Nuovo Cedolino</h2>
+            <div class="upload-section">
+                <h3>📄 Upload Cedolino PDF</h3>
+                <form id="uploadForm">
+                    <div class="form-group">
+                        <label>Dipendente</label>
+                        <select id="dipendente" required>
+                            <option value="">Seleziona dipendente...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Anno</label>
+                        <input type="number" id="anno" min="2020" max="2030" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Mese</label>
+                        <select id="mese" required>
+                            <option value="1">Gennaio</option>
+                            <option value="2">Febbraio</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Aprile</option>
+                            <option value="5">Maggio</option>
+                            <option value="6">Giugno</option>
+                            <option value="7">Luglio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Settembre</option>
+                            <option value="10">Ottobre</option>
+                            <option value="11">Novembre</option>
+                            <option value="12">Dicembre</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Descrizione (opzionale)</label>
+                        <input type="text" id="descrizione" placeholder="Es: Cedolino standard, con bonus...">
+                    </div>
+                    <div class="form-group">
+                        <label>File Cedolino (PDF)</label>
+                        <input type="file" id="cedolinoFile" accept=".pdf" required>
+                        <div id="fileInfo" class="file-info" style="display:none;"></div>
+                    </div>
+                    <button type="submit" class="btn-primary">📤 Carica Cedolino</button>
+                </form>
+            </div>
+            <div id="uploadMessage"></div>
+        </div>
+
+        <!-- Tab Lista Cedolini -->
+        <div id="listaTab" class="tab-content">
+            <h2>Lista Cedolini Caricati</h2>
+            <div class="form-group">
+                <label>Filtra per dipendente</label>
+                <select id="filtroDipendente" onchange="loadCedolini()">
+                    <option value="">Tutti i dipendenti</option>
+                </select>
+            </div>
+            <table class="cedolini-table">
+                <thead>
+                    <tr>
+                        <th>Dipendente</th>
+                        <th>Periodo</th>
+                        <th>Descrizione</th>
+                        <th>File</th>
+                        <th>Dimensione</th>
+                        <th>Caricato il</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="cedoliniList">
+                    <tr><td colspan="7" style="text-align:center;">Caricamento...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tab Gestione Credenziali -->
+        <div id="credenzialiTab" class="tab-content">
+            <h2>Gestione Credenziali Dipendenti</h2>
+            <button class="btn-primary" onclick="openCredenzialiModal()">➕ Crea Nuove Credenziali</button>
+            <table class="credenziali-table">
+                <thead>
+                    <tr>
+                        <th>Dipendente</th>
+                        <th>Ruolo</th>
+                        <th>Username</th>
+                        <th>Ultimo Accesso</th>
+                        <th>Stato</th>
+                    </tr>
+                </thead>
+                <tbody id="credenzialiList">
+                    <tr><td colspan="5" style="text-align:center;">Caricamento...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Crea Credenziali -->
+    <div id="credenzialiModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeCredenzialiModal()">&times;</span>
+            <h2>🔑 Crea Credenziali Dipendente</h2>
+            <form id="credenzialiForm">
+                <div class="form-group">
+                    <label>Dipendente</label>
+                    <select id="credDipendente" required>
+                        <option value="">Seleziona dipendente...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="credUsername" required placeholder="es: mario.rossi">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="credPassword" required placeholder="Minimo 6 caratteri">
+                </div>
+                <button type="submit" class="btn-primary">✅ Crea Credenziali</button>
+            </form>
+            <div id="credMessage" style="margin-top:20px;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        const ADMIN_PIN = '259088';
+
+        // Imposta anno corrente
+        document.getElementById('anno').value = new Date().getFullYear();
+        document.getElementById('mese').value = new Date().getMonth() + 1;
+
+        // Login
+        function checkPin() {
+            const pin = document.getElementById('pinInput').value;
+            if (pin === ADMIN_PIN) {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                loadDipendenti();
+                loadCredenziali();
+            } else {
+                alert('PIN errato!');
+            }
+        }
+
+        function logout() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('pinInput').value = '';
+        }
+
+        // Tab Management
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+
+            if (tabName === 'lista') loadCedolini();
+            if (tabName === 'credenziali') loadCredenziali();
+        }
+
+        // Load Dipendenti
+        async function loadDipendenti() {
+            try {
+                const res = await fetch(`${API_BASE}/api/dipendenti`);
+                const dipendenti = await res.json();
+
+                const selects = [
+                    document.getElementById('dipendente'),
+                    document.getElementById('filtroDipendente'),
+                    document.getElementById('credDipendente')
+                ];
+
+                selects.forEach(select => {
+                    if (select.id !== 'filtroDipendente') {
+                        select.innerHTML = '<option value="">Seleziona dipendente...</option>';
+                    } else {
+                        select.innerHTML = '<option value="">Tutti i dipendenti</option>';
+                    }
+
+                    dipendenti.forEach(d => {
+                        const option = document.createElement('option');
+                        option.value = d.id;
+                        option.textContent = `${d.nome} - ${d.ruolo}`;
+                        select.appendChild(option);
+                    });
+                });
+            } catch (error) {
+                console.error('Errore caricamento dipendenti:', error);
+            }
+        }
+
+        // File input info
+        document.getElementById('cedolinoFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const info = document.getElementById('fileInfo');
+            if (file) {
+                const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+                info.textContent = `📄 ${file.name} (${sizeMB} MB)`;
+                info.style.display = 'block';
+            } else {
+                info.style.display = 'none';
+            }
+        });
+
+        // Upload Form
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData();
+            formData.append('dipendente_id', document.getElementById('dipendente').value);
+            formData.append('anno', document.getElementById('anno').value);
+            formData.append('mese', document.getElementById('mese').value);
+            formData.append('descrizione', document.getElementById('descrizione').value);
+            formData.append('cedolino', document.getElementById('cedolinoFile').files[0]);
+
+            const messageDiv = document.getElementById('uploadMessage');
+            messageDiv.innerHTML = '<div class="alert alert-success">Caricamento in corso...</div>';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/upload-cedolino`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    messageDiv.innerHTML = '<div class="alert alert-success">✅ Cedolino caricato con successo!</div>';
+                    document.getElementById('uploadForm').reset();
+                    document.getElementById('fileInfo').style.display = 'none';
+                    document.getElementById('anno').value = new Date().getFullYear();
+                    document.getElementById('mese').value = new Date().getMonth() + 1;
+                } else {
+                    messageDiv.innerHTML = `<div class="alert alert-error">❌ Errore: ${data.error}</div>`;
+                }
+            } catch (error) {
+                messageDiv.innerHTML = '<div class="alert alert-error">❌ Errore di connessione</div>';
+            }
+        });
+
+        // Load Cedolini
+        async function loadCedolini() {
+            const dipendenteId = document.getElementById('filtroDipendente').value;
+            const tbody = document.getElementById('cedoliniList');
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Caricamento...</td></tr>';
+
+            try {
+                let cedolini = [];
+                if (dipendenteId) {
+                    const res = await fetch(`${API_BASE}/api/cedolini/${dipendenteId}`);
+                    cedolini = await res.json();
+                } else {
+                    // Carica tutti i dipendenti e i loro cedolini
+                    const resDip = await fetch(`${API_BASE}/api/dipendenti`);
+                    const dipendenti = await resDip.json();
+
+                    for (const dip of dipendenti) {
+                        const resCed = await fetch(`${API_BASE}/api/cedolini/${dip.id}`);
+                        const cedDip = await resCed.json();
+                        cedolini.push(...cedDip);
+                    }
+                }
+
+                if (cedolini.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nessun cedolino trovato</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = cedolini.map(c => `
+                    <tr>
+                        <td>${c.dipendente_nome}</td>
+                        <td>${getMese(c.mese)} ${c.anno}</td>
+                        <td>${c.descrizione || '-'}</td>
+                        <td>${c.filename}</td>
+                        <td>${(c.filesize / 1024).toFixed(1)} KB</td>
+                        <td>${new Date(c.caricato_il).toLocaleString('it-IT')}</td>
+                        <td>
+                            <a href="${c.download_url}" target="_blank" class="btn-primary" style="text-decoration:none;padding:5px 10px;font-size:12px;">📥 Download</a>
+                            <button class="btn-danger" onclick="deleteCedolino(${c.id})">🗑️</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">Errore caricamento</td></tr>';
+            }
+        }
+
+        function getMese(n) {
+            const mesi = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+            return mesi[n - 1];
+        }
+
+        async function deleteCedolino(id) {
+            if (!confirm('Sei sicuro di voler eliminare questo cedolino?')) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/cedolino/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (res.ok) {
+                    alert('✅ Cedolino eliminato');
+                    loadCedolini();
+                } else {
+                    alert('❌ Errore eliminazione');
+                }
+            } catch (error) {
+                alert('❌ Errore di connessione');
+            }
+        }
+
+        // Credenziali Management
+        async function loadCredenziali() {
+            const tbody = document.getElementById('credenzialiList');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Caricamento...</td></tr>';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/credenziali/lista`);
+                const dipendenti = await res.json();
+
+                tbody.innerHTML = dipendenti.map(d => `
+                    <tr>
+                        <td>${d.nome}</td>
+                        <td>${d.ruolo}</td>
+                        <td>${d.username || '-'}</td>
+                        <td>${d.ultimo_accesso ? new Date(d.ultimo_accesso).toLocaleString('it-IT') : 'Mai'}</td>
+                        <td>
+                            ${d.username
+                                ? '<span class="badge badge-success">Attivo</span>'
+                                : '<span class="badge badge-warning">No credenziali</span>'}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:red;">Errore caricamento</td></tr>';
+            }
+        }
+
+        function openCredenzialiModal() {
+            document.getElementById('credenzialiModal').style.display = 'block';
+        }
+
+        function closeCredenzialiModal() {
+            document.getElementById('credenzialiModal').style.display = 'none';
+            document.getElementById('credenzialiForm').reset();
+            document.getElementById('credMessage').innerHTML = '';
+        }
+
+        document.getElementById('credenzialiForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const data = {
+                dipendente_id: document.getElementById('credDipendente').value,
+                username: document.getElementById('credUsername').value,
+                password: document.getElementById('credPassword').value
+            };
+
+            const messageDiv = document.getElementById('credMessage');
+            messageDiv.innerHTML = '<div class="alert alert-success">Creazione in corso...</div>';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/credenziali/crea`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    messageDiv.innerHTML = '<div class="alert alert-success">✅ Credenziali create con successo!</div>';
+                    document.getElementById('credenzialiForm').reset();
+                    setTimeout(() => {
+                        closeCredenzialiModal();
+                        loadCredenziali();
+                    }, 1500);
+                } else {
+                    messageDiv.innerHTML = `<div class="alert alert-error">❌ ${result.error}</div>`;
+                }
+            } catch (error) {
+                messageDiv.innerHTML = '<div class="alert alert-error">❌ Errore di connessione</div>';
+            }
+        });
+
+        // Enter key on PIN
+        document.getElementById('pinInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkPin();
+        });
+    </script>
+</body>
+</html>
