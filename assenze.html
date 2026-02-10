@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Assenze</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+        .header { background: #2c3e50; color: white; padding: 25px; text-align: center; position: relative; }
+        .header h1 { font-size: 2em; }
+        .back-btn { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: #3498db; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; }
+        .back-btn:hover { background: #2980b9; }
+        .content { padding: 25px; }
+        .form { background: #f5f5f5; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
+        .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        input, select, textarea { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px; }
+        textarea { min-height: 80px; resize: vertical; font-family: Arial; }
+        .btn { padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; margin-right: 10px; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; margin: 0 3px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #34495e; color: white; }
+        tbody tr:hover { background: #f5f5f5; }
+        .badge { display: inline-block; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: bold; }
+        .badge-malattia { background: #e74c3c; color: white; }
+        .badge-ferie { background: #3498db; color: white; }
+        .badge-permesso { background: #f39c12; color: white; }
+        .badge-altro { background: #95a5a6; color: white; }
+        .msg { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .msg.ok { background: #d4edda; color: #155724; }
+        .msg.err { background: #f8d7da; color: #721c24; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); }
+        .modal-content { background: white; margin: 5% auto; padding: 0; border-radius: 10px; width: 90%; max-width: 600px; }
+        .modal-header { background: #3498db; color: white; padding: 20px; border-radius: 10px 10px 0 0; }
+        .modal-body { padding: 20px; }
+        .close { float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+        .stat-card { background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; }
+        .stat-value { font-size: 32px; font-weight: bold; color: #2c3e50; margin: 10px 0; }
+        .stat-label { font-size: 14px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-btn">← Torna al Gestionale</a>
+            <h1>📋 Registro Assenze</h1>
+            <p>Gestione Malattie, Ferie e Permessi</p>
+        </div>
+        
+        <div class="content">
+            <div id="message"></div>
+            
+            <div class="form">
+                <h3>➕ Aggiungi Assenza</h3>
+                <div class="row">
+                    <div>
+                        <label>Dipendente *</label>
+                        <select id="dipendente" required></select>
+                    </div>
+                    <div>
+                        <label>Tipo Assenza *</label>
+                        <select id="tipo" required>
+                            <option value="malattia">🤒 Malattia</option>
+                            <option value="ferie">🏖️ Ferie</option>
+                            <option value="permesso">📝 Permesso</option>
+                            <option value="altro">❓ Altro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div>
+                        <label>Data Inizio *</label>
+                        <input type="date" id="dataInizio" required>
+                    </div>
+                    <div>
+                        <label>Data Fine *</label>
+                        <input type="date" id="dataFine" required>
+                    </div>
+                </div>
+                <div>
+                    <label>Note (opzionali)</label>
+                    <textarea id="note" placeholder="Es: Certificato medico, richiesta approvata da..."></textarea>
+                </div>
+                <button class="btn btn-success" onclick="addAssenza()">Aggiungi Assenza</button>
+            </div>
+            
+            <h3>📊 Statistiche Rapide</h3>
+            <div class="stats" id="stats"></div>
+            
+            <h3>📋 Elenco Assenze</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Dipendente</th>
+                        <th>Tipo</th>
+                        <th>Dal</th>
+                        <th>Al</th>
+                        <th>Giorni</th>
+                        <th>Note</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="listaAssenze"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="modalEdit" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2>✏️ Modifica Assenza</h2>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId">
+                <div>
+                    <label>Dipendente *</label>
+                    <select id="editDipendente" required></select>
+                </div>
+                <div style="margin-top:10px;">
+                    <label>Tipo Assenza *</label>
+                    <select id="editTipo" required>
+                        <option value="malattia">🤒 Malattia</option>
+                        <option value="ferie">🏖️ Ferie</option>
+                        <option value="permesso">📝 Permesso</option>
+                        <option value="altro">❓ Altro</option>
+                    </select>
+                </div>
+                <div class="row" style="margin-top:10px;">
+                    <div>
+                        <label>Data Inizio *</label>
+                        <input type="date" id="editDataInizio" required>
+                    </div>
+                    <div>
+                        <label>Data Fine *</label>
+                        <input type="date" id="editDataFine" required>
+                    </div>
+                </div>
+                <div style="margin-top:10px;">
+                    <label>Note</label>
+                    <textarea id="editNote"></textarea>
+                </div>
+                <div style="margin-top:20px;">
+                    <button class="btn btn-success" onclick="saveAssenza()">Salva</button>
+                    <button class="btn btn-danger" onclick="closeModal()">Annulla</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let assenze = [];
+        let dipendenti = [];
+
+        function msg(text, type='ok') {
+            const m = document.getElementById('message');
+            m.innerHTML = '<div class="msg '+type+'">'+text+'</div>';
+            setTimeout(() => m.innerHTML = '', 3000);
+        }
+
+        function formatDate(d) {
+            return new Date(d).toLocaleDateString('it-IT');
+        }
+
+        function calcGiorni(inizio, fine) {
+            const start = new Date(inizio);
+            const end = new Date(fine);
+            const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            return diff;
+        }
+
+        async function loadDipendenti() {
+            const res = await fetch('/api/dipendenti');
+            dipendenti = await res.json();
+            
+            const html = dipendenti.map(d => `<option value="${d.id}">${d.nome}</option>`).join('');
+            document.getElementById('dipendente').innerHTML = '<option value="">-- Seleziona --</option>' + html;
+            document.getElementById('editDipendente').innerHTML = '<option value="">-- Seleziona --</option>' + html;
+        }
+
+        async function loadAssenze() {
+            const res = await fetch('/api/assenze');
+            assenze = await res.json();
+            
+            const html = assenze.map(a => {
+                const badgeClass = `badge-${a.tipo}`;
+                const giorni = calcGiorni(a.data_inizio, a.data_fine);
+                return `
+                    <tr>
+                        <td><b>${a.dipendente_nome}</b></td>
+                        <td><span class="badge ${badgeClass}">${a.tipo.toUpperCase()}</span></td>
+                        <td>${formatDate(a.data_inizio)}</td>
+                        <td>${formatDate(a.data_fine)}</td>
+                        <td><b>${giorni} gg</b></td>
+                        <td>${a.note || '-'}</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" onclick="editAssenza(${a.id})">✏️</button>
+                            <button class="btn btn-danger btn-sm" onclick="delAssenza(${a.id})">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            document.getElementById('listaAssenze').innerHTML = html || '<tr><td colspan="7">Nessuna assenza registrata</td></tr>';
+            
+            loadStats();
+        }
+
+        function loadStats() {
+            const stats = {
+                malattia: 0,
+                ferie: 0,
+                permesso: 0,
+                altro: 0,
+                totale: 0
+            };
+            
+            assenze.forEach(a => {
+                const giorni = calcGiorni(a.data_inizio, a.data_fine);
+                stats[a.tipo] += giorni;
+                stats.totale += giorni;
+            });
+            
+            document.getElementById('stats').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">🤒 Malattia</div>
+                    <div class="stat-value">${stats.malattia}</div>
+                    <div class="stat-label">giorni</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">🏖️ Ferie</div>
+                    <div class="stat-value">${stats.ferie}</div>
+                    <div class="stat-label">giorni</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">📝 Permessi</div>
+                    <div class="stat-value">${stats.permesso}</div>
+                    <div class="stat-label">giorni</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">📊 Totale</div>
+                    <div class="stat-value" style="color:#e74c3c;">${stats.totale}</div>
+                    <div class="stat-label">giorni</div>
+                </div>
+            `;
+        }
+
+        async function addAssenza() {
+            const data = {
+                dipendente_id: document.getElementById('dipendente').value,
+                tipo: document.getElementById('tipo').value,
+                data_inizio: document.getElementById('dataInizio').value,
+                data_fine: document.getElementById('dataFine').value,
+                note: document.getElementById('note').value
+            };
+            
+            if(!data.dipendente_id || !data.data_inizio || !data.data_fine) {
+                alert('Compila tutti i campi obbligatori!');
+                return;
+            }
+            
+            const res = await fetch('/api/assenze', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            
+            if(res.ok) {
+                msg('✅ Assenza registrata!');
+                document.getElementById('dipendente').value = '';
+                document.getElementById('dataInizio').value = '';
+                document.getElementById('dataFine').value = '';
+                document.getElementById('note').value = '';
+                loadAssenze();
+            } else {
+                msg('Errore!', 'err');
+            }
+        }
+
+        function editAssenza(id) {
+            const a = assenze.find(x => x.id === id);
+            document.getElementById('editId').value = a.id;
+            document.getElementById('editDipendente').value = a.dipendente_id;
+            document.getElementById('editTipo').value = a.tipo;
+            document.getElementById('editDataInizio').value = a.data_inizio;
+            document.getElementById('editDataFine').value = a.data_fine;
+            document.getElementById('editNote').value = a.note || '';
+            document.getElementById('modalEdit').style.display = 'block';
+        }
+
+        async function saveAssenza() {
+            const id = document.getElementById('editId').value;
+            const data = {
+                dipendente_id: document.getElementById('editDipendente').value,
+                tipo: document.getElementById('editTipo').value,
+                data_inizio: document.getElementById('editDataInizio').value,
+                data_fine: document.getElementById('editDataFine').value,
+                note: document.getElementById('editNote').value
+            };
+            
+            const res = await fetch('/api/assenze/'+id, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            
+            if(res.ok) {
+                msg('✅ Modificato!');
+                closeModal();
+                loadAssenze();
+            }
+        }
+
+        async function delAssenza(id) {
+            if(!confirm('Eliminare questa assenza?')) return;
+            const res = await fetch('/api/assenze/'+id, {method: 'DELETE'});
+            if(res.ok) {
+                msg('✅ Eliminato!');
+                loadAssenze();
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modalEdit').style.display = 'none';
+        }
+
+        window.onclick = (e) => {
+            if(e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
+        }
+
+        loadDipendenti();
+        loadAssenze();
+    </script>
+</body>
+</html>

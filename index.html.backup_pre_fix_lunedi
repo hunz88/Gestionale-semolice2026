@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionale Completo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* Login Screen */
+        #loginScreen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+        }
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        .login-box h1 {
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .pin-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 24px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            letter-spacing: 10px;
+            margin-bottom: 20px;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .login-btn:hover {
+            background: #5568d3;
+        }
+        .error-msg {
+            color: #e74c3c;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        #mainContent {
+            display: none;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1600px; margin: 0 auto; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+        .header { background: #2c3e50; color: white; padding: 25px; text-align: center; }
+        .header h1 { font-size: 2em; }
+        .tabs { display: flex; background: #34495e; }
+        .tab { flex: 1; padding: 15px; text-align: center; color: white; cursor: pointer; border: none; background: none; font-size: 1em; font-weight: bold; }
+        .tab.active { background: white; color: #2c3e50; }
+        .content { display: none; padding: 25px; }
+        .content.active { display: block; }
+        .form { background: #f5f5f5; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
+        .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        input, select { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px; }
+        input:focus, select:focus { outline: none; border-color: #3498db; }
+        .btn { padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; margin-right: 10px; margin-bottom: 10px; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-info { background: #17a2b8; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; margin: 0 3px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #34495e; color: white; }
+        tbody tr:hover { background: #f5f5f5; }
+        .week-nav { display: flex; justify-content: space-between; align-items: center; background: #3498db; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .week-nav button { background: white; color: #3498db; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .week-grid { display: grid; grid-template-columns: 150px repeat(7, 1fr); gap: 2px; background: #ddd; border-radius: 8px; overflow: hidden; }
+        .week-cell { background: white; padding: 10px; min-height: 80px; }
+        .week-header { background: #34495e; color: white; padding: 10px; text-align: center; font-weight: bold; }
+        .turno { background: #27ae60; color: white; padding: 8px; border-radius: 4px; margin: 2px 0; font-size: 12px; }
+        .turno.daldon { background: #27ae60; }
+        .turno.sunset { background: #f39c12; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); }
+        .modal-content { background: white; margin: 3% auto; padding: 0; border-radius: 10px; width: 90%; max-width: 600px; }
+        .modal-header { background: #3498db; color: white; padding: 20px; border-radius: 10px 10px 0 0; }
+        .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }
+        .close { float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .alert { padding: 12px; border-radius: 5px; margin: 10px 0; font-weight: bold; }
+        .alert-warning { background: #fff3cd; color: #856404; border: 2px solid #ffc107; }
+        .alert-info { background: #d1ecf1; color: #0c5460; border: 2px solid #17a2b8; }
+        .alert-success { background: #d4edda; color: #155724; border: 2px solid #28a745; }
+        .msg { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .msg.ok { background: #d4edda; color: #155724; }
+        .msg.err { background: #f8d7da; color: #721c24; }
+        .riepilogo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+        .riepilogo-card { background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; }
+        .riepilogo-label { font-size: 14px; color: #666; margin-bottom: 5px; }
+        .riepilogo-value { font-size: 28px; font-weight: bold; color: #2c3e50; }
+        .riepilogo-value.money { color: #27ae60; }
+        .giorni-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin: 15px 0; }
+        .giorno-check { display: flex; align-items: center; padding: 10px; background: #f5f5f5; border-radius: 5px; cursor: pointer; }
+        .giorno-check input { margin-right: 8px; }
+        .giorno-check:hover { background: #e0e0e0; }
+        .dip-checkbox { display: flex; align-items: center; padding: 8px; background: #f5f5f5; border-radius: 5px; margin: 5px 0; }
+        .dip-checkbox input { margin-right: 8px; }
+        .export-header { background: #2c3e50; color: white; padding: 15px; text-align: center; border-radius: 8px 8px 0 0; margin-bottom: 10px; }
+        .export-grid { display: table; width: 100%; border-collapse: collapse; }
+        .export-row { display: table-row; }
+        .export-cell { display: table-cell; border: 1px solid #ddd; padding: 8px; vertical-align: top; min-width: 100px; }
+        .export-cell.header { background: #34495e; color: white; font-weight: bold; text-align: center; }
+        .export-cell.dip-name { background: #34495e; color: white; font-weight: bold; }
+        .export-turno { background: #27ae60; color: white; padding: 5px; border-radius: 3px; margin: 2px 0; font-size: 11px; }
+        .export-turno.sunset { background: #f39c12; }
+        .contributi-box { background: #fff3cd; padding: 15px; border-radius: 8px; border: 2px solid #ffc107; margin: 20px 0; }
+        .storico-item { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #27ae60; }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen">
+        <div class="login-box">
+            <h1>🔐 Accesso Gestionale</h1>
+            <input type="password" 
+                   class="pin-input" 
+                   id="pinInput" 
+                   placeholder="000000" 
+                   maxlength="6"
+                   inputmode="numeric">
+            <button class="login-btn" onclick="checkLogin()">ACCEDI</button>
+            <div class="error-msg" id="errorMsg"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent">
+    <div class="container">
+        <div class="header">
+            <h1>🏪 Gestionale Dipendenti Completo</h1>
+            <p>Dicembre 2024</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('dipendenti')">👥 Dipendenti</button>
+            <button class="tab" onclick="showTab('turnistica')">📅 Turnistica</button>
+            <button class="tab" onclick="showTab('riepilogo')">💰 Riepilogo</button>
+        </div>
+        
+        <div id="dipendenti" class="content active">
+            <div id="message"></div>
+            <div class="form">
+                <h3>Aggiungi Dipendente</h3>
+                <div class="row">
+                    <div><label>Nome *</label><input type="text" id="nome" required></div>
+                    <div><label>Ruolo *</label><input type="text" id="ruolo" required></div>
+                    <div><label>Telefono</label><input type="tel" id="telefono"></div>
+                    <div><label>Paga Oraria (€) *</label><input type="number" id="paga" value="10" step="0.5" required></div>
+                    <div><label>Ore Contrattuali *</label><input type="number" id="ore" value="8" step="0.5" required><small style="color:#666;">Ore minime giornaliere</small></div>
+                </div>
+                <button class="btn btn-success" onclick="addDip()">Aggiungi Dipendente</button>
+            </div>
+            <table><thead><tr><th>Nome</th><th>Ruolo</th><th>Telefono</th><th>Paga/h</th><th>Ore Minime</th><th>Azioni</th></tr></thead><tbody id="listaDip"></tbody></table>
+        </div>
+        
+        <div id="turnistica" class="content">
+            <div class="week-nav">
+                <button onclick="prevWeek()">◀ Settimana Prec</button>
+                <div><h3 id="weekTitle">Settimana</h3></div>
+                <button onclick="nextWeek()">Settimana Succ ▶</button>
+            </div>
+            <button class="btn btn-success" onclick="openAddTurno()">➕ Aggiungi Turno Singolo</button>
+            <button class="btn btn-primary" onclick="openAddTurniMultipli()">📅 Aggiungi Turni Multipli</button>
+            <button class="btn btn-info" onclick="openExport()">📸 Esporta Calendario JPEG</button>
+            <a href="assenze.html" class="btn btn-warning" style="display:inline-block; text-decoration:none;">📋 Registro Assenze</a>
+            <div class="form" style="margin-top:20px;"><h3>💶 Soldi Necessari Questa Settimana</h3><div id="weekSummary"></div></div>
+            <div class="week-grid" id="weekGrid" style="margin-top:15px;"></div>
+        </div>
+        
+        <div id="riepilogo" class="content">
+            <div class="form">
+                <h3>Calcola Riepilogo Mensile</h3>
+                <div class="row">
+                    <div><label>Dipendente</label><select id="riepDip"></select></div>
+                    <div><label>Mese</label><select id="riepMese"><option value="1">Gennaio</option><option value="2">Febbraio</option><option value="3">Marzo</option><option value="4">Aprile</option><option value="5">Maggio</option><option value="6">Giugno</option><option value="7">Luglio</option><option value="8">Agosto</option><option value="9">Settembre</option><option value="10">Ottobre</option><option value="11">Novembre</option><option value="12" selected>Dicembre</option></select></div>
+                    <div><label>Anno</label><select id="riepAnno">
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                            <option value="2026" selected>2026</option>
+                            <option value="2027">2027</option>
+                            <option value="2028">2028</option>
+                            <option value="2029">2029</option>
+                            <option value="2030">2030</option>
+                        </select></div>
+                </div>
+                <button class="btn btn-primary" onclick="calcRiepilogo()">Calcola</button>
+                <button class="btn btn-info" onclick="loadStorico()">📊 Vedi Storico</button>
+            </div>
+            <div id="riepResult" style="display:none;">
+                <h3 id="riepNome"></h3>
+                <div class="riepilogo-grid">
+                    <div class="riepilogo-card"><div class="riepilogo-label">Ore Normali</div><div class="riepilogo-value" id="riepOreNorm">0</div></div>
+                    <div class="riepilogo-card"><div class="riepilogo-label">Ore Straordinari</div><div class="riepilogo-value" id="riepOreStr">0</div></div>
+                    <div class="riepilogo-card"><div class="riepilogo-label">Numero Turni</div><div class="riepilogo-value" id="riepNumTurni">0</div></div>
+                    <div class="riepilogo-card"><div class="riepilogo-label">Compenso Normali</div><div class="riepilogo-value money" id="riepCompNorm">€0</div></div>
+                    <div class="riepilogo-card"><div class="riepilogo-label">Compenso Straordinari</div><div class="riepilogo-value money" id="riepCompStr">€0</div></div>
+                    <div class="riepilogo-card" style="grid-column: span 2;"><div class="riepilogo-label">💰 TOTALE LORDO</div><div class="riepilogo-value money" id="riepCompTot" style="font-size: 36px;">€0</div></div>
+                </div>
+                <div class="contributi-box">
+                    <h4>📝 Contributi e Calcolo Netto</h4>
+                    <div class="row" style="margin-top:15px;">
+                        <div><label>Contributi (€)</label><input type="number" id="contributi" step="0.01" value="0" onchange="calcNetto()"><small style="color:#666;">Inserisci importo contributi mensili</small></div>
+                        <div><label>Netto da Pagare</label><input type="number" id="nettoPagare" step="0.01" value="0" readonly style="background:#e8f5e9; font-weight:bold; font-size:18px;"></div>
+                    </div>
+                    <div style="margin-top:15px;">
+                        <button class="btn btn-success" onclick="salvaRiepilogo()">💾 Salva Riepilogo Mensile</button>
+                        <div id="savedInfo" style="margin-top:10px; display:none; color:#155724; font-weight:bold;"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="storicoResult" style="display:none; margin-top:30px;"><h3>📊 Storico Riepilogo Salvati</h3><div id="storicoList"></div></div>
+        </div>
+    </div>
+    <div id="modalEditDip" class="modal"><div class="modal-content"><div class="modal-header"><span class="close" onclick="closeModalDip()">&times;</span><h2>✏️ Modifica Dipendente</h2></div><div class="modal-body"><input type="hidden" id="editDipId"><div><label>Nome *</label><input type="text" id="editNome" required></div><div style="margin-top:10px;"><label>Ruolo *</label><input type="text" id="editRuolo" required></div><div style="margin-top:10px;"><label>Telefono</label><input type="tel" id="editTel"></div><div class="row" style="margin-top:15px;"><div><label>Paga Oraria (€) *</label><input type="number" id="editPaga" step="0.5" required></div><div><label>Ore Contrattuali *</label><input type="number" id="editOre" step="0.5" required></div></div><div style="margin-top:20px;"><button class="btn btn-success" onclick="saveDip()">Salva</button><button class="btn btn-danger" onclick="closeModalDip()">Annulla</button></div></div></div></div>
+    
+    <div id="modalTurno" class="modal"><div class="modal-content"><div class="modal-header"><span class="close" onclick="closeModalTurno()">&times;</span><h2 id="turnoTitle">➕ Aggiungi Turno</h2></div><div class="modal-body"><input type="hidden" id="turnoId"><div><label>Dipendente *</label><select id="turnoDip" onchange="updateOreInfo()"></select><div id="dipInfo" style="margin-top:10px;padding:10px;background:#e3f2fd;border-radius:5px;display:none;"><small><strong>Ore contrattuali:</strong> <span id="infoOre">-</span>h | <strong>Paga:</strong> €<span id="infoPaga">-</span>/h</small></div></div><div class="row" style="margin-top:15px;"><div><label>Data *</label><input type="date" id="turnoData" required></div><div><label>Bar *</label><select id="turnoBar"><option value="daldon">Bar Dal Don</option><option value="sunset">Sunset Bar</option></select></div></div><div class="row" style="margin-top:15px;"><div><label>Orario Inizio *</label><input type="time" id="turnoInizio" value="18:00" onchange="calcOre()"></div><div><label>Orario Fine *</label><input type="time" id="turnoFine" value="01:00" onchange="calcOre()"></div></div><div id="oreAlert" style="display:none;margin-top:15px;"></div><div class="row" style="margin-top:15px;"><div><label>Ore Normali</label><input type="number" id="turnoOreNorm" step="0.5" value="0" readonly style="background:#f5f5f5;"></div><div><label>Ore Straordinari</label><input type="number" id="turnoOreStr" step="0.5" value="0" readonly style="background:#f5f5f5;"></div></div><div style="margin-top:15px;"><label>Note</label><input type="text" id="turnoNote" placeholder="Malattia, permesso..."></div><div style="margin-top:20px;"><button class="btn btn-success" onclick="saveTurno()">Salva Turno</button><button class="btn btn-danger" onclick="closeModalTurno()">Annulla</button></div></div></div></div>
+    
+    <div id="modalMulti" class="modal"><div class="modal-content"><div class="modal-header"><span class="close" onclick="closeModalMulti()">&times;</span><h2>📅 Aggiungi Turni Multipli</h2></div><div class="modal-body"><div><label>Dipendente *</label><select id="multiDip" onchange="updateMultiOreInfo()"></select><div id="multiDipInfo" style="margin-top:10px;padding:10px;background:#e3f2fd;border-radius:5px;display:none;"><small><strong>Ore contrattuali:</strong> <span id="multiInfoOre">-</span>h | <strong>Paga:</strong> €<span id="multiInfoPaga">-</span>/h</small></div></div><div class="row" style="margin-top:15px;"><div><label>Data Inizio *</label><input type="date" id="multiDataInizio" required></div><div><label>Data Fine *</label><input type="date" id="multiDataFine" required></div></div><div style="margin-top:15px;"><label>Giorni della Settimana *</label><div class="giorni-grid"><label class="giorno-check"><input type="checkbox" value="lun" id="gLun"><span>Lun</span></label><label class="giorno-check"><input type="checkbox" value="mar" id="gMar"><span>Mar</span></label><label class="giorno-check"><input type="checkbox" value="mer" id="gMer"><span>Mer</span></label><label class="giorno-check"><input type="checkbox" value="gio" id="gGio"><span>Gio</span></label><label class="giorno-check"><input type="checkbox" value="ven" id="gVen"><span>Ven</span></label><label class="giorno-check"><input type="checkbox" value="sab" id="gSab"><span>Sab</span></label><label class="giorno-check"><input type="checkbox" value="dom" id="gDom"><span>Dom</span></label></div></div><div class="row" style="margin-top:15px;"><div><label>Bar *</label><select id="multiBar"><option value="daldon">Bar Dal Don</option><option value="sunset">Sunset Bar</option></select></div></div><div class="row" style="margin-top:15px;"><div><label>Orario Inizio *</label><input type="time" id="multiInizio" value="07:00" onchange="calcMultiOre()"></div><div><label>Orario Fine *</label><input type="time" id="multiFine" value="12:00" onchange="calcMultiOre()"></div></div><div id="multiAlert" style="display:none;margin-top:15px;"></div><div class="row" style="margin-top:15px;"><div><label>Ore Normali</label><input type="number" id="multiOreNorm" step="0.5" value="0" readonly style="background:#f5f5f5;"></div><div><label>Ore Straordinari</label><input type="number" id="multiOreStr" step="0.5" value="0" readonly style="background:#f5f5f5;"></div></div><div style="margin-top:15px;"><label>Note (opzionali)</label><input type="text" id="multiNote" placeholder="es: Turno fisso mattina"></div><div style="margin-top:20px;"><button class="btn btn-success" onclick="saveMulti()">✅ Crea Tutti i Turni</button><button class="btn btn-danger" onclick="closeModalMulti()">Annulla</button></div></div></div></div>
+    
+    <div id="modalExport" class="modal"><div class="modal-content"><div class="modal-header"><span class="close" onclick="closeModalExport()">&times;</span><h2>📸 Esporta Calendario JPEG</h2></div><div class="modal-body"><div class="row"><div><label>Data Inizio *</label><input type="date" id="exportInizio" required></div><div><label>Data Fine *</label><input type="date" id="exportFine" required></div></div><div style="margin-top:15px;"><label>Dipendenti da Includere</label><div style="margin-top:10px;max-height:200px;overflow-y:auto;"><label class="dip-checkbox"><input type="checkbox" id="exportAll" onchange="toggleAllDip()" checked><strong>Tutti i dipendenti</strong></label><div id="exportDipList"></div></div></div><div style="margin-top:20px;"><button class="btn btn-success" onclick="generateExport()">🎨 Genera Anteprima</button><button class="btn btn-danger" onclick="closeModalExport()">Annulla</button></div><div id="exportPreviewContainer" style="display:none; margin-top:20px;"><div id="exportPreview"></div><div style="text-align:center; margin-top:15px;"><button class="btn btn-success" onclick="downloadExport()">📥 Scarica JPEG</button></div></div></div></div></div>
+
+    <script>
+        let dip = [];
+        let turni = [];
+        let currentWeek = getMonday(new Date());
+        let currentRiepDip = null;
+        let currentRiepAnno = null;
+        let currentRiepMese = null;
+
+        function getMonday(d) {
+            d = new Date(d);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+
+        function formatDate(d) {
+            return d.toISOString().split('T')[0];
+        }
+
+        function msg(text, type='ok') {
+            const m = document.getElementById('message');
+            m.innerHTML = '<div class="msg '+type+'">'+text+'</div>';
+            setTimeout(() => m.innerHTML = '', 3000);
+        }
+
+        function showTab(tab) {
+            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+            if(tab === 'turnistica') loadWeek();
+            if(tab === 'riepilogo') updateRiepSelects();
+        }
+
+        async function loadDip() {
+            const res = await fetch('/api/dipendenti');
+            dip = await res.json();
+            const html = dip.map(d => `<tr><td><b>${d.nome}</b></td><td>${d.ruolo}</td><td>${d.telefono||'-'}</td><td style="color:#27ae60;font-weight:bold;">€${d.paga_oraria}</td><td style="font-weight:bold;">${d.ore_contrattuali}h</td><td><button class="btn btn-warning btn-sm" onclick="editDip(${d.id})">✏️</button><button class="btn btn-danger btn-sm" onclick="delDip(${d.id})">🗑️</button></td></tr>`).join('');
+            document.getElementById('listaDip').innerHTML = html || '<tr><td colspan="6">Nessun dipendente</td></tr>';
+            updateDipSelects();
+        }
+
+        async function addDip() {
+            const data = {nome: document.getElementById('nome').value, ruolo: document.getElementById('ruolo').value, telefono: document.getElementById('telefono').value, paga_oraria: document.getElementById('paga').value, ore_contrattuali: document.getElementById('ore').value};
+            const res = await fetch('/api/dipendenti', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+            if(res.ok) { msg('✅ Dipendente aggiunto!'); document.getElementById('nome').value = ''; document.getElementById('ruolo').value = ''; document.getElementById('telefono').value = ''; loadDip(); } else { msg('Errore!', 'err'); }
+        }
+
+        function editDip(id) {
+            const d = dip.find(x => x.id === id);
+            document.getElementById('editDipId').value = d.id;
+            document.getElementById('editNome').value = d.nome;
+            document.getElementById('editRuolo').value = d.ruolo;
+            document.getElementById('editTel').value = d.telefono || '';
+            document.getElementById('editPaga').value = d.paga_oraria;
+            document.getElementById('editOre').value = d.ore_contrattuali;
+            document.getElementById('modalEditDip').style.display = 'block';
+        }
+
+        async function saveDip() {
+            const id = document.getElementById('editDipId').value;
+            const data = {nome: document.getElementById('editNome').value, ruolo: document.getElementById('editRuolo').value, telefono: document.getElementById('editTel').value, paga_oraria: document.getElementById('editPaga').value, ore_contrattuali: document.getElementById('editOre').value};
+            const res = await fetch('/api/dipendenti/'+id, {method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+            if(res.ok) { msg('✅ Modificato!'); closeModalDip(); loadDip(); }
+        }
+
+        async function delDip(id) {
+            if(!confirm('Eliminare?')) return;
+            const res = await fetch('/api/dipendenti/'+id, {method: 'DELETE'});
+            if(res.ok) { msg('✅ Eliminato!'); loadDip(); }
+        }
+
+        function closeModalDip() {
+            document.getElementById('modalEditDip').style.display = 'none';
+        }
+
+        async function loadWeek() {
+            const dataInizio = formatDate(currentWeek);
+            const res = await fetch('/api/turni/settimana/' + dataInizio);
+            turni = await res.json();
+            const dataFine = new Date(currentWeek);
+            dataFine.setDate(dataFine.getDate() + 6);
+            document.getElementById('weekTitle').textContent = `${currentWeek.toLocaleDateString('it-IT', {day:'2-digit',month:'2-digit'})} - ${dataFine.toLocaleDateString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric'})}`;
+            let html = '<div class="week-header">Dipendente</div>';
+            const days = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+            for(let i=0; i<7; i++) { const d = new Date(currentWeek); d.setDate(d.getDate() + i); html += `<div class="week-header">${days[i]}<br>${d.getDate()}/${d.getMonth()+1}</div>`; }
+            dip.forEach(d => {
+                html += `<div class="week-cell" style="font-weight:bold;background:#f5f5f5;">${d.nome}</div>`;
+                for(let i=0; i<7; i++) {
+                    const date = new Date(currentWeek);
+                    date.setDate(date.getDate() + i);
+                    const dateStr = formatDate(date);
+                    const turniGiorno = turni.filter(t => t.dipendente_id === d.id && t.data === dateStr);
+                    html += '<div class="week-cell">';
+                    turniGiorno.forEach(t => { html += `<div class="turno ${t.bar}"><div onclick="editTurno(${t.id})" style="cursor:pointer;">${t.orario_inizio}-${t.orario_fine}<br>${t.ore_normali}h${t.ore_straordinari>0?' +'+t.ore_straordinari+'h':''}</div><button onclick="event.stopPropagation(); delTurno(${t.id})" style="background:#e74c3c; color:white; border:none; border-radius:3px; padding:2px 5px; margin-top:3px; cursor:pointer; font-size:11px; width:100%;">🗑️ Elimina</button></div>`; });
+                    html += '</div>';
+                }
+            });
+            document.getElementById('weekGrid').innerHTML = html;
+            loadWeekSummary();
+        }
+
+        async function loadWeekSummary() {
+            const dataInizio = formatDate(currentWeek);
+            const res = await fetch('/api/riepilogo/settimana/' + dataInizio);
+            const data = await res.json();
+            let totale = 0;
+            let html = '<table style="width:100%; margin-top:10px;"><thead><tr><th>Dipendente</th><th>Ore Tot</th><th>Compenso</th></tr></thead><tbody>';
+            data.forEach(d => { const comp = d.comp_totale || 0; totale += comp; html += `<tr><td><b>${d.nome}</b></td><td>${((d.tot_normali||0) + (d.tot_straordinari||0)).toFixed(1)}h</td><td style="color:#27ae60;font-weight:bold;">€${comp.toFixed(2)}</td></tr>`; });
+            html += `</tbody><tfoot><tr style="background:#27ae60;color:white;font-weight:bold;"><td colspan="2">TOTALE SETTIMANA</td><td style="font-size:18px;">€${totale.toFixed(2)}</td></tr></tfoot></table>`;
+            document.getElementById('weekSummary').innerHTML = html;
+        }
+
+        function prevWeek() { currentWeek.setDate(currentWeek.getDate() - 7); loadWeek(); }
+        function nextWeek() { currentWeek.setDate(currentWeek.getDate() + 7); loadWeek(); }
+
+        function openAddTurno() {
+            document.getElementById('turnoTitle').textContent = '➕ Aggiungi Turno';
+            document.getElementById('turnoId').value = '';
+            document.getElementById('turnoData').value = formatDate(new Date());
+            document.getElementById('turnoInizio').value = '18:00';
+            document.getElementById('turnoFine').value = '01:00';
+            document.getElementById('turnoOreNorm').value = '0';
+            document.getElementById('turnoOreStr').value = '0';
+            document.getElementById('turnoNote').value = '';
+            document.getElementById('oreAlert').style.display = 'none';
+            document.getElementById('dipInfo').style.display = 'none';
+            document.getElementById('modalTurno').style.display = 'block';
+        }
+
+        function editTurno(id) {
+            const t = turni.find(x => x.id === id);
+            document.getElementById('turnoTitle').textContent = '✏️ Modifica Turno';
+            document.getElementById('turnoId').value = t.id;
+            document.getElementById('turnoDip').value = t.dipendente_id;
+            document.getElementById('turnoData').value = t.data;
+            document.getElementById('turnoBar').value = t.bar;
+            document.getElementById('turnoInizio').value = t.orario_inizio;
+            document.getElementById('turnoFine').value = t.orario_fine;
+            document.getElementById('turnoOreNorm').value = t.ore_normali;
+            document.getElementById('turnoOreStr').value = t.ore_straordinari;
+            document.getElementById('turnoNote').value = t.note || '';
+            updateOreInfo();
+            document.getElementById('modalTurno').style.display = 'block';
+        }
+
+        async function delTurno(id) {
+            if(!confirm('Eliminare questo turno?')) return;
+            const res = await fetch('/api/turni/'+id, {method: 'DELETE'});
+            if(res.ok) { msg('✅ Turno eliminato!'); loadWeek(); } else { msg('Errore eliminazione!', 'err'); }
+        }
+
+        function updateOreInfo() {
+            const sel = document.getElementById('turnoDip');
+            const d = dip.find(x => x.id == sel.value);
+            if(d) { document.getElementById('infoOre').textContent = d.ore_contrattuali; document.getElementById('infoPaga').textContent = d.paga_oraria; document.getElementById('dipInfo').style.display = 'block'; } else { document.getElementById('dipInfo').style.display = 'none'; }
+            calcOre();
+        }
+
+        function calcOre() {
+            const sel = document.getElementById('turnoDip');
+            const d = dip.find(x => x.id == sel.value);
+            if(!d) return;
+            const inizio = document.getElementById('turnoInizio').value;
+            const fine = document.getElementById('turnoFine').value;
+            if(!inizio || !fine) return;
+            const [hi, mi] = inizio.split(':').map(Number);
+            const [hf, mf] = fine.split(':').map(Number);
+            let ore = hf - hi;
+            let min = mf - mi;
+            if(ore < 0) ore += 24;
+            if(min < 0) { ore--; min += 60; }
+            const totOre = ore + (min / 60);
+            const oreContr = parseFloat(d.ore_contrattuali);
+            let normali, straord;
+            if(totOre <= oreContr) { normali = totOre; straord = 0; } else { normali = oreContr; straord = totOre - oreContr; }
+            document.getElementById('turnoOreNorm').value = normali.toFixed(1);
+            document.getElementById('turnoOreStr').value = straord.toFixed(1);
+            const alert = document.getElementById('oreAlert');
+            if(totOre < oreContr) { const mancanti = oreContr - totOre; alert.className = 'alert alert-warning'; alert.innerHTML = `⚠️ <strong>Attenzione!</strong> Turno di ${totOre.toFixed(1)}h, mancano ${mancanti.toFixed(1)}h rispetto al contratto (${oreContr}h)`; alert.style.display = 'block'; } else if(straord > 0) { alert.className = 'alert alert-info'; alert.innerHTML = `ℹ️ <strong>Info:</strong> ${normali.toFixed(1)}h normali + ${straord.toFixed(1)}h straordinari = ${totOre.toFixed(1)}h totali`; alert.style.display = 'block'; } else { alert.style.display = 'none'; }
+        }
+
+        async function saveTurno() {
+            const id = document.getElementById('turnoId').value;
+            const data = {dipendente_id: document.getElementById('turnoDip').value, data: document.getElementById('turnoData').value, bar: document.getElementById('turnoBar').value, orario_inizio: document.getElementById('turnoInizio').value, orario_fine: document.getElementById('turnoFine').value, ore_normali: document.getElementById('turnoOreNorm').value, ore_straordinari: document.getElementById('turnoOreStr').value, note: document.getElementById('turnoNote').value};
+            const url = id ? '/api/turni/'+id : '/api/turni';
+            const method = id ? 'PUT' : 'POST';
+            const res = await fetch(url, {method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+            if(res.ok) { msg(id ? '✅ Turno modificato!' : '✅ Turno aggiunto!'); closeModalTurno(); loadWeek(); }
+        }
+
+        function closeModalTurno() { document.getElementById('modalTurno').style.display = 'none'; }
+        function openAddTurniMultipli() {
+            document.getElementById('multiDataInizio').value = formatDate(new Date());
+            document.getElementById('multiDataFine').value = formatDate(new Date());
+            document.getElementById('multiInizio').value = '07:00';
+            document.getElementById('multiFine').value = '12:00';
+            document.getElementById('multiOreNorm').value = '0';
+            document.getElementById('multiOreStr').value = '0';
+            document.getElementById('multiNote').value = '';
+            document.getElementById('multiAlert').style.display = 'none';
+            document.getElementById('multiDipInfo').style.display = 'none';
+            ['gLun','gMar','gMer','gGio','gVen','gSab','gDom'].forEach(id => { document.getElementById(id).checked = false; });
+            document.getElementById('modalMulti').style.display = 'block';
+        }
+
+        function updateMultiOreInfo() {
+            const sel = document.getElementById('multiDip');
+            const d = dip.find(x => x.id == sel.value);
+            if(d) { document.getElementById('multiInfoOre').textContent = d.ore_contrattuali; document.getElementById('multiInfoPaga').textContent = d.paga_oraria; document.getElementById('multiDipInfo').style.display = 'block'; } else { document.getElementById('multiDipInfo').style.display = 'none'; }
+            calcMultiOre();
+        }
+
+        function calcMultiOre() {
+            const sel = document.getElementById('multiDip');
+            const d = dip.find(x => x.id == sel.value);
+            if(!d) return;
+            const inizio = document.getElementById('multiInizio').value;
+            const fine = document.getElementById('multiFine').value;
+            if(!inizio || !fine) return;
+            const [hi, mi] = inizio.split(':').map(Number);
+            const [hf, mf] = fine.split(':').map(Number);
+            let ore = hf - hi;
+            let min = mf - mi;
+            if(ore < 0) ore += 24;
+            if(min < 0) { ore--; min += 60; }
+            const totOre = ore + (min / 60);
+            const oreContr = parseFloat(d.ore_contrattuali);
+            let normali, straord;
+            if(totOre <= oreContr) { normali = totOre; straord = 0; } else { normali = oreContr; straord = totOre - oreContr; }
+            document.getElementById('multiOreNorm').value = normali.toFixed(1);
+            document.getElementById('multiOreStr').value = straord.toFixed(1);
+            const alert = document.getElementById('multiAlert');
+            if(totOre < oreContr) { const mancanti = oreContr - totOre; alert.className = 'alert alert-warning'; alert.innerHTML = `⚠️ <strong>Attenzione!</strong> Turno di ${totOre.toFixed(1)}h, mancano ${mancanti.toFixed(1)}h rispetto al contratto (${oreContr}h)`; alert.style.display = 'block'; } else if(straord > 0) { alert.className = 'alert alert-info'; alert.innerHTML = `ℹ️ <strong>Info:</strong> ${normali.toFixed(1)}h normali + ${straord.toFixed(1)}h straordinari = ${totOre.toFixed(1)}h totali`; alert.style.display = 'block'; } else { alert.className = 'alert alert-success'; alert.innerHTML = `✅ Perfetto! ${totOre.toFixed(1)}h = ore contrattuali`; alert.style.display = 'block'; }
+        }
+
+        async function saveMulti() {
+            const giorni = [];
+            ['gLun','gMar','gMer','gGio','gVen','gSab','gDom'].forEach(id => { const checkbox = document.getElementById(id); if(checkbox.checked) giorni.push(checkbox.value); });
+            if(giorni.length === 0) { alert('Seleziona almeno un giorno della settimana!'); return; }
+            const data = {dipendente_id: document.getElementById('multiDip').value, data_inizio: document.getElementById('multiDataInizio').value, data_fine: document.getElementById('multiDataFine').value, giorni_settimana: giorni, bar: document.getElementById('multiBar').value, orario_inizio: document.getElementById('multiInizio').value, orario_fine: document.getElementById('multiFine').value, ore_normali: document.getElementById('multiOreNorm').value, ore_straordinari: document.getElementById('multiOreStr').value, note: document.getElementById('multiNote').value};
+            const res = await fetch('/api/turni/multipli', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+            if(res.ok) { const result = await res.json(); msg(`✅ Creati ${result.count} turni!`); closeModalMulti(); loadWeek(); }
+        }
+
+        function closeModalMulti() { document.getElementById('modalMulti').style.display = 'none'; }
+
+        function openExport() {
+            document.getElementById('exportInizio').value = formatDate(new Date());
+            document.getElementById('exportFine').value = formatDate(new Date());
+            document.getElementById('exportAll').checked = true;
+            document.getElementById('exportPreviewContainer').style.display = 'none';
+            const html = dip.map(d => `<label class="dip-checkbox"><input type="checkbox" class="dip-check" value="${d.id}" checked><span>${d.nome}</span></label>`).join('');
+            document.getElementById('exportDipList').innerHTML = html;
+            document.getElementById('modalExport').style.display = 'block';
+        }
+
+        function toggleAllDip() {
+            const checkAll = document.getElementById('exportAll').checked;
+            document.querySelectorAll('.dip-check').forEach(cb => cb.checked = checkAll);
+        }
+
+        async function generateExport() {
+            const inizio = document.getElementById('exportInizio').value;
+            const fine = document.getElementById('exportFine').value;
+            const dipIds = [];
+            if(!document.getElementById('exportAll').checked) { document.querySelectorAll('.dip-check:checked').forEach(cb => { dipIds.push(parseInt(cb.value)); }); }
+            const data = {data_inizio: inizio, data_fine: fine, dipendenti_ids: dipIds};
+            const res = await fetch('/api/export-data', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+            if(res.ok) { const exportData = await res.json(); renderCalendar(exportData); document.getElementById('exportPreviewContainer').style.display = 'block'; }
+        }
+
+        function renderCalendar(data) {
+            const {turni, dipendenti, data_inizio, data_fine} = data;
+            const start = new Date(data_inizio);
+            const end = new Date(data_fine);
+            const giorni = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            let html = `<div class="export-header"><h2>Calendario Turni</h2><p>Dal ${data_inizio} al ${data_fine}</p></div><div class="export-grid"><div class="export-row"><div class="export-cell header">Dipendente</div>`;
+            const days = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+            for(let i = 0; i < giorni; i++) { const d = new Date(start); d.setDate(d.getDate() + i); html += `<div class="export-cell header">${days[d.getDay()]}<br>${d.getDate()}/${d.getMonth()+1}</div>`; }
+            html += '</div>';
+            dipendenti.forEach(dip => {
+                html += `<div class="export-row"><div class="export-cell dip-name">${dip.nome}<br><small>${dip.ruolo}</small></div>`;
+                for(let i = 0; i < giorni; i++) {
+                    const d = new Date(start);
+                    d.setDate(d.getDate() + i);
+                    const dateStr = formatDate(d);
+                    const turniGiorno = turni.filter(t => t.dipendente_id === dip.id && t.data === dateStr);
+                    html += '<div class="export-cell">';
+                    turniGiorno.forEach(t => { html += `<div class="export-turno ${t.bar}">${t.orario_inizio}-${t.orario_fine}</div>`; });
+                    html += '</div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+            document.getElementById('exportPreview').innerHTML = html;
+        }
+
+        async function downloadExport() {
+    const preview = document.getElementById('exportPreview');
+    const modal = document.getElementById('modalExport');
+    try {
+        modal.style.display = 'none';
+        const tempContainer = document.createElement('div');
+        tempContainer.style.position = 'fixed';
+        tempContainer.style.top = '0';
+        tempContainer.style.left = '0';
+        tempContainer.style.width = 'auto';
+        tempContainer.style.height = 'auto';
+        tempContainer.style.zIndex = '10000';
+        tempContainer.style.backgroundColor = 'white';
+        tempContainer.style.padding = '20px';
+        tempContainer.innerHTML = preview.innerHTML;
+        document.body.appendChild(tempContainer);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        const canvas = await html2canvas(tempContainer, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            width: tempContainer.scrollWidth,
+            height: tempContainer.scrollHeight,
+            windowWidth: tempContainer.scrollWidth,
+            windowHeight: tempContainer.scrollHeight,
+            useCORS: true,
+            allowTaint: true
+        });
+        document.body.removeChild(tempContainer);
+        modal.style.display = 'block';
+        canvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `calendario_${document.getElementById('exportInizio').value}_${document.getElementById('exportFine').value}.jpg`;
+            a.click();
+            URL.revokeObjectURL(url);
+            msg('✅ Calendario scaricato!');
+        }, 'image/jpeg', 0.95);
+    } catch(err) {
+        console.error('Errore export:', err);
+        modal.style.display = 'block';
+        msg('Errore durante export!', 'err');
+    }
+}
+
+        function closeModalExport() { document.getElementById('modalExport').style.display = 'none'; }
+
+        function updateRiepSelects() {
+            const sel = document.getElementById('riepDip');
+            sel.innerHTML = '<option value="">-- Seleziona --</option>' + dip.map(d => `<option value="${d.id}">${d.nome}</option>`).join('');
+        }
+
+        async function calcRiepilogo() {
+            const dipId = document.getElementById('riepDip').value;
+            const mese = document.getElementById('riepMese').value;
+            const anno = document.getElementById('riepAnno').value;
+            if(!dipId) { alert('Seleziona un dipendente'); return; }
+            currentRiepDip = dipId;
+            currentRiepAnno = anno;
+            currentRiepMese = mese;
+            const res = await fetch(`/api/riepilogo/${dipId}/${anno}/${mese}`);
+            const data = await res.json();
+            document.getElementById('riepNome').textContent = `Riepilogo ${data.nome || '-'} - ${mese}/${anno}`;
+            document.getElementById('riepOreNorm').textContent = (data.tot_normali || 0).toFixed(1) + 'h';
+            document.getElementById('riepOreStr').textContent = (data.tot_straordinari || 0).toFixed(1) + 'h';
+            document.getElementById('riepNumTurni').textContent = data.num_turni || 0;
+            document.getElementById('riepCompNorm').textContent = '€' + (data.comp_normali || 0).toFixed(2);
+            document.getElementById('riepCompStr').textContent = '€' + (data.comp_straordinari || 0).toFixed(2);
+            document.getElementById('riepCompTot').textContent = '€' + (data.comp_totale || 0).toFixed(2);
+            if(data.saved) { document.getElementById('contributi').value = data.saved.contributi || 0; document.getElementById('savedInfo').style.display = 'block'; document.getElementById('savedInfo').textContent = '✅ Riepilogo salvato il ' + new Date(data.saved.salvato_il).toLocaleDateString('it-IT'); } else { document.getElementById('contributi').value = 0; document.getElementById('savedInfo').style.display = 'none'; }
+            calcNetto();
+            document.getElementById('riepResult').style.display = 'block';
+        }
+
+        function calcNetto() {
+            const lordo = parseFloat(document.getElementById('riepCompTot').textContent.replace('€', '')) || 0;
+            const contributi = parseFloat(document.getElementById('contributi').value) || 0;
+            const netto = lordo - contributi;
+            document.getElementById('nettoPagare').value = netto.toFixed(2);
+        }
+
+        async function salvaRiepilogo() {
+            if(!currentRiepDip || !currentRiepAnno || !currentRiepMese) { alert('Calcola prima il riepilogo!'); return; }
+            const data = {dipendente_id: currentRiepDip, anno: currentRiepAnno, mese: currentRiepMese, ore_normali: parseFloat(document.getElementById('riepOreNorm').textContent) || 0, ore_straordinari: parseFloat(document.getElementById('riepOreStr').textContent) || 0, compenso_lordo: parseFloat(document.getElementById('riepCompTot').textContent.replace('€', '')) || 0, contributi: parseFloat(document.getElementById('contributi').value) || 0, netto_da_pagare: parseFloat(document.getElementById('nettoPagare').value) || 0};
+            const res = await fetch('/api/riepilogo/salva', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+            if(res.ok) { msg('✅ Riepilogo salvato!'); document.getElementById('savedInfo').style.display = 'block'; document.getElementById('savedInfo').textContent = '✅ Riepilogo salvato ora'; } else { msg('Errore salvataggio!', 'err'); }
+        }
+
+        async function loadStorico() {
+            const dipId = document.getElementById('riepDip').value;
+            if(!dipId) { alert('Seleziona un dipendente'); return; }
+            const res = await fetch(`/api/riepilogo/storico/${dipId}`);
+            const data = await res.json();
+            if(data.length === 0) { document.getElementById('storicoList').innerHTML = '<p>Nessun riepilogo salvato</p>'; } else {
+                const mesi = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+                let html = '';
+                data.forEach(r => { html += `<div class="storico-item"><h4>${mesi[r.mese-1]} ${r.anno}</h4><p><strong>Ore:</strong> ${r.ore_normali}h normali + ${r.ore_straordinari}h straord</p><p><strong>Lordo:</strong> €${r.compenso_lordo.toFixed(2)} | <strong>Contributi:</strong> €${r.contributi.toFixed(2)}</p><p style="color:#27ae60;font-weight:bold;font-size:18px;"><strong>Netto:</strong> €${r.netto_da_pagare.toFixed(2)}</p><small>Salvato il ${new Date(r.salvato_il).toLocaleDateString('it-IT')}</small></div>`; });
+                document.getElementById('storicoList').innerHTML = html;
+            }
+            document.getElementById('storicoResult').style.display = 'block';
+        }
+
+        function updateDipSelects() {
+            ['turnoDip', 'multiDip'].forEach(selectId => {
+                const sel = document.getElementById(selectId);
+                sel.innerHTML = '<option value="">-- Seleziona --</option>' + dip.map(d => `<option value="${d.id}">${d.nome}</option>`).join('');
+            });
+        }
+
+        window.onclick = (e) => { if(e.target.classList.contains('modal')) { e.target.style.display = 'none'; } }
+        loadDip();
+    </script>
+    </div>
+
+    <script>
+        function checkLogin() {
+            const pin = document.getElementById('pinInput').value;
+            const errorMsg = document.getElementById('errorMsg');
+            
+            if (pin === '259088') {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                sessionStorage.setItem('logged_in', 'true');
+            } else {
+                errorMsg.textContent = '❌ PIN errato';
+                document.getElementById('pinInput').value = '';
+            }
+        }
+
+        document.getElementById('pinInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkLogin();
+        });
+
+        // Check se già loggato
+        if (sessionStorage.getItem('logged_in') === 'true') {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

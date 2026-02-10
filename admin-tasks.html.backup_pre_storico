@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Checklist - Sunset Bar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .login-box h1 {
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .pin-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 24px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            letter-spacing: 10px;
+            margin-bottom: 20px;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .error-msg {
+            color: #e74c3c;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .admin-panel {
+            display: none;
+        }
+
+        .topbar {
+            background: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .topbar h1 {
+            color: #333;
+            font-size: 24px;
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+
+        .content {
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-primary {
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            padding: 8px 16px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .task-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .task-item-admin {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .task-info-admin {
+            flex: 1;
+        }
+
+        .task-info-admin h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .task-meta {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .task-meta span {
+            display: inline-block;
+            margin-right: 15px;
+            padding: 4px 10px;
+            background: white;
+            border-radius: 5px;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 48px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .completion-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .completion-item.incomplete {
+            background: #fee;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .completion-time {
+            font-size: 12px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 15px;
+            }
+
+            .tabs {
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+
+            .task-item-admin {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .task-actions {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <h1>🔐 Admin Checklist</h1>
+            <input type="password" 
+                   class="pin-input" 
+                   id="pinInput" 
+                   placeholder="000000" 
+                   maxlength="6"
+                   inputmode="numeric"
+                   pattern="[0-9]*">
+            <button class="login-btn" onclick="login()">ACCEDI</button>
+            <div class="error-msg" id="errorMsg"></div>
+        </div>
+    </div>
+
+    <div class="admin-panel" id="adminPanel">
+        <div class="topbar">
+            <h1>🔧 Admin Checklist - Sunset Bar</h1>
+            <button class="logout-btn" onclick="logout()">Esci</button>
+        </div>
+
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+                <button class="tab" onclick="switchTab('tasks')">✅ Gestione Task</button>
+                <button class="tab" onclick="switchTab('history')">📜 Storico</button>
+            </div>
+
+            <div class="tab-content active" id="dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="statCompletati">0</div>
+                        <div class="stat-label">Completati Oggi</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="statMancanti">0</div>
+                        <div class="stat-label">Da Fare</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="statPercentuale">0%</div>
+                        <div class="stat-label">Completamento</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>✅ Task Completati Oggi</h2>
+                    <div id="completedList"></div>
+                </div>
+
+                <div class="card">
+                    <h2>⚠️ Task Non Completati</h2>
+                    <div id="incompleteList"></div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="tasks">
+                <div class="card">
+                    <h2>➕ Nuovo Task</h2>
+                    <form id="newTaskForm" onsubmit="createTask(event)">
+                        <div class="form-group">
+                            <label>Nome Task</label>
+                            <input type="text" id="taskNome" required placeholder="Es: Pulizia Macchina Caffè">
+                        </div>
+                        <div class="form-group">
+                            <label>Categoria</label>
+                            <select id="taskCategoria" required>
+                                <option value="">Caricamento...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Postazione</label>
+                            <select id="taskPostazione" required>
+                                <option value="banco">Banco</option>
+                                <option value="cucina">Cucina</option>
+                                <option value="qualsiasi">Qualsiasi</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="giornoGroup" style="display:none">
+                            <label>Giorno Settimana (solo per settimanali)</label>
+                            <select id="taskGiorno">
+                                <option value="">Tutti</option>
+                                <option value="0">Domenica</option>
+                                <option value="1">Lunedì</option>
+                                <option value="2">Martedì</option>
+                                <option value="3">Mercoledì</option>
+                                <option value="4">Giovedì</option>
+                                <option value="5">Venerdì</option>
+                                <option value="6">Sabato</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-primary">Crea Task</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2>📋 Lista Task</h2>
+                    <div class="task-list" id="tasksList"></div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="history">
+                <div class="card">
+                    <h2>📅 Seleziona Data</h2>
+                    <input type="date" id="historyDate" class="form-group" style="max-width: 300px">
+                    <button class="btn-primary" onclick="loadHistory()">Carica Storico</button>
+                </div>
+                <div class="card">
+                    <h2>📜 Completamenti</h2>
+                    <div id="historyList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin + '/api';
+        let categories = [];
+        let tasks = [];
+
+        async function login() {
+            const pin = document.getElementById('pinInput').value;
+            const errorMsg = document.getElementById('errorMsg');
+
+            try {
+                const res = await fetch(`${API_BASE}/admin/login`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({pin})
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('adminPanel').style.display = 'block';
+                    initAdmin();
+                } else {
+                    errorMsg.textContent = '❌ PIN errato';
+                    document.getElementById('pinInput').value = '';
+                }
+            } catch (error) {
+                errorMsg.textContent = '❌ Errore connessione';
+            }
+        }
+
+        function logout() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('pinInput').value = '';
+            document.getElementById('errorMsg').textContent = '';
+        }
+
+        document.getElementById('pinInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
+
+        async function initAdmin() {
+            await loadCategories();
+            await loadAllTasks();
+            await loadDashboard();
+            document.getElementById('historyDate').valueAsDate = new Date();
+            setInterval(loadDashboard, 30000);
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+
+            if (tabName === 'dashboard') loadDashboard();
+            if (tabName === 'tasks') loadAllTasks();
+        }
+
+        async function loadCategories() {
+            try {
+                const res = await fetch(`${API_BASE}/task-categories`);
+                categories = await res.json();
+                
+                const select = document.getElementById('taskCategoria');
+                select.innerHTML = categories.map(c => 
+                    `<option value="${c.id}">${c.nome}</option>`
+                ).join('');
+
+                select.addEventListener('change', (e) => {
+                    const cat = categories.find(c => c.id == e.target.value);
+                    document.getElementById('giornoGroup').style.display = 
+                        cat && cat.reset_freq === 'settimana' ? 'block' : 'none';
+                });
+
+            } catch (error) {
+                console.error('Errore caricamento categorie:', error);
+            }
+        }
+
+        async function loadAllTasks() {
+            try {
+                const res = await fetch(`${API_BASE}/tasks`);
+                tasks = await res.json();
+
+                const container = document.getElementById('tasksList');
+                
+                if (tasks.length === 0) {
+                    container.innerHTML = '<p style="text-align:center;color:#999">Nessun task presente</p>';
+                    return;
+                }
+
+                container.innerHTML = tasks.map(t => `
+                    <div class="task-item-admin" style="border-left-color: ${t.colore}">
+                        <div class="task-info-admin">
+                            <h3>${t.nome}</h3>
+                            <div class="task-meta">
+                                <span style="background: ${t.colore}; color: white">${t.categoria_nome}</span>
+                                <span>📍 ${t.postazione}</span>
+                                ${t.giorno_settimana !== null ? `<span>📅 ${getGiornoName(t.giorno_settimana)}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="btn-danger" onclick="deleteTask(${t.id}, '${t.nome}')">🗑️ Elimina</button>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Errore caricamento task:', error);
+            }
+        }
+
+        async function createTask(e) {
+            e.preventDefault();
+
+            const data = {
+                nome: document.getElementById('taskNome').value,
+                categoria_id: document.getElementById('taskCategoria').value,
+                postazione: document.getElementById('taskPostazione').value,
+                giorno_settimana: document.getElementById('taskGiorno').value || null
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/tasks`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+
+                if (res.ok) {
+                    alert('✅ Task creato con successo!');
+                    document.getElementById('newTaskForm').reset();
+                    loadAllTasks();
+                } else {
+                    alert('❌ Errore creazione task');
+                }
+            } catch (error) {
+                alert('❌ Errore connessione');
+            }
+        }
+
+        async function deleteTask(id, nome) {
+            if (!confirm(`Eliminare il task "${nome}"?`)) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/tasks/${id}`, {method: 'DELETE'});
+                if (res.ok) {
+                    alert('✅ Task eliminato');
+                    loadAllTasks();
+                }
+            } catch (error) {
+                alert('❌ Errore eliminazione');
+            }
+        }
+
+        async function loadDashboard() {
+            const oggi = new Date().toISOString().split('T')[0];
+
+            try {
+                const resCompleted = await fetch(`${API_BASE}/tasks/completions/${oggi}`);
+                const completed = await resCompleted.json();
+
+                const resIncomplete = await fetch(`${API_BASE}/tasks/incomplete/${oggi}`);
+                const incomplete = await resIncomplete.json();
+
+                const totale = completed.length + incomplete.length;
+                const percentuale = totale > 0 ? Math.round((completed.length / totale) * 100) : 0;
+
+                document.getElementById('statCompletati').textContent = completed.length;
+                document.getElementById('statMancanti').textContent = incomplete.length;
+                document.getElementById('statPercentuale').textContent = percentuale + '%';
+
+                const completedList = document.getElementById('completedList');
+                if (completed.length === 0) {
+                    completedList.innerHTML = '<p style="text-align:center;color:#999">Nessun task completato oggi</p>';
+                } else {
+                    completedList.innerHTML = completed.map(c => `
+                        <div class="completion-item">
+                            <div>
+                                <strong>${c.task_nome}</strong>
+                                <div style="font-size:12px;color:#666">
+                                    <span style="background: ${c.colore}; color: white; padding: 2px 8px; border-radius: 3px; margin-right: 5px">
+                                        ${c.categoria_nome}
+                                    </span>
+                                    👤 ${c.dipendente_nome}
+                                </div>
+                            </div>
+                            <div class="completion-time">⏰ ${c.ora}</div>
+                        </div>
+                    `).join('');
+                }
+
+                const incompleteList = document.getElementById('incompleteList');
+                if (incomplete.length === 0) {
+                    incompleteList.innerHTML = '<p style="text-align:center;color:#28a745">✅ Tutti i task completati!</p>';
+                } else {
+                    incompleteList.innerHTML = incomplete.map(t => `
+                        <div class="completion-item incomplete">
+                            <div>
+                                <strong>${t.task_nome}</strong>
+                                <div style="font-size:12px;color:#666">
+                                    <span style="background: ${t.colore}; color: white; padding: 2px 8px; border-radius: 3px; margin-right: 5px">
+                                        ${t.categoria_nome}
+                                    </span>
+                                    📍 ${t.postazione}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+            } catch (error) {
+                console.error('Errore caricamento dashboard:', error);
+            }
+        }
+
+        async function loadHistory() {
+            const data = document.getElementById('historyDate').value;
+            if (!data) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/tasks/completions/${data}`);
+                const completions = await res.json();
+
+                const container = document.getElementById('historyList');
+
+                if (completions.length === 0) {
+                    container.innerHTML = '<p style="text-align:center;color:#999">Nessun completamento in questa data</p>';
+                    return;
+                }
+
+                container.innerHTML = completions.map(c => `
+                    <div class="completion-item">
+                        <div>
+                            <strong>${c.task_nome}</strong>
+                            <div style="font-size:12px;color:#666">
+                                <span style="background: ${c.colore}; color: white; padding: 2px 8px; border-radius: 3px; margin-right: 5px">
+                                    ${c.categoria_nome}
+                                </span>
+                                👤 ${c.dipendente_nome}
+                            </div>
+                        </div>
+                        <div class="completion-time">⏰ ${c.ora}</div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Errore caricamento storico:', error);
+            }
+        }
+
+        function getGiornoName(num) {
+            const giorni = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+            return giorni[num] || '';
+        }
+    </script>
+</body>
+</html>

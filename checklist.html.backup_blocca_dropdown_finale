@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist - Sunset Bar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+
+        .postazione-switch {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .postazione-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .postazione-btn.active {
+            background: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .turno-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .turno-info p {
+            color: #666;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        .dipendente-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-top: 10px;
+            background: white;
+        }
+
+        .stats-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .stats-box h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .stats-box .big-number {
+            font-size: 48px;
+            font-weight: bold;
+        }
+
+        .finish-btn {
+            width: 100%;
+            padding: 20px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(39, 174, 96, 0.4);
+        }
+
+        .finish-btn:hover {
+            background: #229954;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(39, 174, 96, 0.6);
+        }
+
+        .finish-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .turno-chiuso {
+            background: #e8f5e9;
+            border: 3px solid #27ae60;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .turno-chiuso h2 {
+            color: #27ae60;
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+
+        .turno-chiuso p {
+            color: #666;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+
+        .category-section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .category-badge {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .category-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .task-item {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .task-item:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .task-item.completed {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .task-item.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .checkbox-wrapper {
+            margin-right: 15px;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            accent-color: #28a745;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .completed-by {
+            font-size: 12px;
+            color: #28a745;
+            font-weight: 600;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .completed-by::before {
+            content: "✓";
+            margin-right: 5px;
+            font-size: 16px;
+        }
+
+        .no-tasks {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(40, 167, 69, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-btn.confirm {
+            background: #27ae60;
+            color: white;
+        }
+
+        .modal-btn.cancel {
+            background: #95a5a6;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Checklist Giornaliera</h1>
+            
+            <div class="postazione-switch">
+                <button class="postazione-btn active" id="btnBanco" onclick="switchPostazione('banco')">
+                    🏪 BANCO
+                </button>
+                <button class="postazione-btn" id="btnCucina" onclick="switchPostazione('cucina')">
+                    👨‍🍳 CUCINA
+                </button>
+            </div>
+            
+            <div class="turno-info" id="turnoInfo">
+                <p><strong>Caricamento informazioni turno...</strong></p>
+            </div>
+
+            <select class="dipendente-select" id="dipendenteSelect">
+                <option value="">Caricamento...</option>
+            </select>
+        </div>
+
+        <div id="turnoChiusoBox" style="display:none;">
+            <div class="turno-chiuso">
+                <h2>✅ Turno Chiuso!</h2>
+                <p id="chiusuraInfo"></p>
+                <p style="margin-top: 20px; font-size: 14px; color: #999;">Grazie per il tuo lavoro! 🎉</p>
+            </div>
+        </div>
+
+        <div id="statsBox" style="display:none;">
+            <div class="stats-box">
+                <h3>Task Completati</h3>
+                <div class="big-number" id="statsNumber">0/0</div>
+            </div>
+            
+            <button class="finish-btn" id="finishBtn" onclick="openFinishModal()">
+                🏁 HO FINITO IL TURNO
+            </button>
+        </div>
+
+        <div id="tasksContainer">
+            <div class="loading">⏳ Caricamento task...</div>
+        </div>
+    </div>
+
+    <button class="refresh-btn" onclick="loadTasks()" title="Ricarica">🔄</button>
+
+    <div class="modal" id="finishModal">
+        <div class="modal-content">
+            <h2>🏁 Conferma Chiusura Turno</h2>
+            <p id="modalStats" style="font-size: 18px; margin: 20px 0;"></p>
+            <p style="color: #666;">Dopo la conferma non potrai più modificare i task di oggi.</p>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeFinishModal()">Annulla</button>
+                <button class="modal-btn confirm" onclick="confirmFinishTurno()">✅ Conferma</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin + '/api';
+        let currentPostazione = 'banco';
+        let currentTurno = null;
+        let currentDipendente = '';
+        let allTasks = [];
+        let turnoChiuso = false;
+
+        function switchPostazione(postazione) {
+            if (turnoChiuso) return;
+            
+            currentPostazione = postazione;
+            document.getElementById('btnBanco').classList.toggle('active', postazione === 'banco');
+            document.getElementById('btnCucina').classList.toggle('active', postazione === 'cucina');
+            loadTasks();
+        }
+
+        async function init() {
+            await loadCurrentTurno();
+            await checkTurnoChiuso();
+            
+            if (!turnoChiuso) {
+                await loadTasks();
+                setInterval(loadTasks, 120000);
+            }
+        }
+
+        async function checkTurnoChiuso() {
+            if (!currentDipendente) return;
+            
+            const oggi = new Date().toISOString().split('T')[0];
+            
+            try {
+                const res = await fetch(`${API_BASE}/turni/chiuso/${encodeURIComponent(currentDipendente)}/${oggi}`);
+                const data = await res.json();
+                
+                if (data.chiuso) {
+                    turnoChiuso = true;
+                    const chiusura = data.chiusura;
+                    
+                    document.getElementById('tasksContainer').style.display = 'none';
+                    document.getElementById('statsBox').style.display = 'none';
+                    document.getElementById('turnoChiusoBox').style.display = 'block';
+                    
+                    document.getElementById('chiusuraInfo').innerHTML = `
+                        Hai chiuso il turno alle <strong>${chiusura.ora_chiusura}</strong><br>
+                        Task completati: <strong>${chiusura.task_completati}/${chiusura.task_totali}</strong>
+                    `;
+                }
+            } catch (error) {
+                console.error('Errore verifica chiusura:', error);
+            }
+        }
+
+        async function loadCurrentTurno() {
+            try {
+                const dipendenteSelect = document.getElementById('dipendenteSelect');
+                const now = new Date();
+                const oggi = now.toISOString().split('T')[0];
+                const oraCorrente = now.getHours() * 60 + now.getMinutes(); // minuti da mezzanotte
+                
+                console.log('🔍 Ora:', now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0'));
+                console.log('🔍 Oggi:', oggi);
+                console.log('🔍 Postazione:', currentPostazione);
+                
+                // MARGINE 30 MINUTI
+                const MARGINE = 30;
+                
+                // Carica turni di OGGI
+                const resOggi = await fetch(`${API_BASE}/turni/giorno/${oggi}`);
+                
+                if (!resOggi.ok) {
+                    console.error('❌ Errore fetch turni oggi');
+                    dipendenteSelect.innerHTML = '<option value="">Errore caricamento</option>';
+                    return;
+                }
+                
+                const turniOggi = await resOggi.json();
+                console.log('📋 Turni oggi:', turniOggi.length);
+                
+                // Filtra per postazione E orario
+                const turniAttivi = turniOggi.filter(t => {
+                    // 1. Deve essere nella postazione giusta
+                    // Filtro bar rimosso - dipendente sceglie banco/cucina manualmente
+                    
+                    // 2. Calcola orari in minuti
+                    const [hi, mi] = t.orario_inizio.split(':').map(Number);
+                    const [hf, mf] = t.orario_fine.split(':').map(Number);
+                    
+                    let inizioMin = hi * 60 + mi;
+                    let fineMin = hf * 60 + mf;
+                    
+                    // Se finisce dopo mezzanotte (es: 01:00)
+                    if (fineMin < inizioMin) {
+                        fineMin += 1440; // +24 ore
+                    }
+                    
+                    // Aggiungi margine
+                    fineMin += MARGINE;
+                    
+                    console.log('⏰', t.nome, ':', inizioMin, '-', fineMin, '(ora:', oraCorrente, ')');
+                    
+                    // 3. È nel range orario?
+                    const attivo = oraCorrente >= inizioMin && oraCorrente <= fineMin;
+                    
+                    if (attivo) {
+                        console.log('✅', t.nome, 'IN TURNO!');
+                    }
+                    
+                    return attivo;
+                });
+                
+                console.log('🎯 Turni attivi trovati:', turniAttivi.length);
+                
+                if (turniAttivi.length === 0) {
+                    dipendenteSelect.innerHTML = '<option value="">Nessun turno attivo ora</option>';
+                    dipendenteSelect.disabled = true;
+                    return;
+                }
+                
+                // Se c'è UN SOLO dipendente in turno
+                if (turniAttivi.length === 1) {
+                    const dip = turniAttivi[0];
+                    dipendenteSelect.innerHTML = `<option value="${dip.nome}" selected>${dip.nome} ✅</option>`;
+                    dipendenteSelect.disabled = true; // BLOCCA!
+                    currentDipendente = dip.nome;
+                    console.log('🔒 Dipendente bloccato:', dip.nome);
+                    loadTasks();
+                } else {
+                    // PIÙ dipendenti = mostra lista
+                    dipendenteSelect.innerHTML = '<option value="">-- Seleziona --</option>' + 
+                        turniAttivi.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
+                    dipendenteSelect.disabled = false;
+                    
+                    dipendenteSelect.addEventListener('change', (e) => {
+                        currentDipendente = e.target.value;
+                        if (currentDipendente) loadTasks();
+                    });
+                }
+                
+            } catch (err) {
+                console.error('💥 ERRORE loadCurrentTurno:', err);
+                document.getElementById('dipendenteSelect').innerHTML = '<option value="">Errore di rete</option>';
+            }
+        }
+
+        async function loadTasks() {
+            if (turnoChiuso) return;
+            
+            try {
+                const res = await fetch(`${API_BASE}/tasks/postazione/${currentPostazione}`);
+                const tasks = await res.json();
+                allTasks = tasks;
+
+                const container = document.getElementById('tasksContainer');
+                
+                if (tasks.length === 0) {
+                    container.innerHTML = '<div class="no-tasks">✅ Nessun task da completare!</div>';
+                    updateStats();
+                    return;
+                }
+
+                const categories = {};
+                tasks.forEach(task => {
+                    if (!categories[task.categoria_nome]) {
+                        categories[task.categoria_nome] = {
+                            colore: task.colore,
+                            tasks: []
+                        };
+                    }
+                    categories[task.categoria_nome].tasks.push(task);
+                });
+
+                let html = '';
+                for (const [catName, catData] of Object.entries(categories)) {
+                    html += `
+                        <div class="category-section">
+                            <div class="category-header">
+                                <div class="category-badge" style="background-color: ${catData.colore}"></div>
+                                <div class="category-name">${catName}</div>
+                            </div>
+                            ${catData.tasks.map(task => renderTask(task)).join('')}
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = html;
+                updateStats();
+
+            } catch (error) {
+                console.error('Errore caricamento task:', error);
+            }
+        }
+
+        function renderTask(task) {
+            const isCompleted = task.completed;
+            const completedBy = task.completions.length > 0 ? task.completions[0].dipendente_nome : '';
+
+            return `
+                <div class="task-item ${isCompleted ? 'completed' : ''}" id="task-${task.id}">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" 
+                               ${isCompleted ? 'checked disabled' : ''}
+                               onchange="completeTask(${task.id}, '${task.nome}', this.checked)">
+                    </div>
+                    <div class="task-content">
+                        <div class="task-name">${task.nome}</div>
+                        ${isCompleted ? `<div class="completed-by">Fatto da ${completedBy}</div>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateStats() {
+            const completati = allTasks.filter(t => t.completed).length;
+            const totali = allTasks.length;
+            
+            document.getElementById('statsNumber').textContent = `${completati}/${totali}`;
+            document.getElementById('statsBox').style.display = 'block';
+        }
+
+        async function completeTask(taskId, taskNome, checked) {
+            if (!checked) return;
+
+            if (!currentDipendente) {
+                alert('⚠️ Seleziona prima il tuo nome!');
+                loadTasks();
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/tasks/complete`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        task_id: taskId,
+                        dipendente_nome: currentDipendente,
+                        turno_id: currentTurno ? currentTurno.turno_id : null
+                    })
+                });
+
+                const result = await res.json();
+                
+                if (result.id) {
+                    const taskElement = document.getElementById(`task-${taskId}`);
+                    taskElement.classList.add('completed');
+                    taskElement.querySelector('.task-content').innerHTML += 
+                        `<div class="completed-by">Fatto da ${currentDipendente}</div>`;
+                    taskElement.querySelector('input[type="checkbox"]').disabled = true;
+                    
+                    allTasks.find(t => t.id === taskId).completed = true;
+                    updateStats();
+                } else {
+                    alert('⚠️ Errore nel salvataggio');
+                    loadTasks();
+                }
+
+            } catch (error) {
+                console.error('Errore completamento task:', error);
+                alert('⚠️ Errore di connessione');
+                loadTasks();
+            }
+        }
+
+        function openFinishModal() {
+            const completati = allTasks.filter(t => t.completed).length;
+            const totali = allTasks.length;
+            
+            document.getElementById('modalStats').textContent = 
+                `Hai completato ${completati} task su ${totali}`;
+            
+            document.getElementById('finishModal').classList.add('active');
+        }
+
+        function closeFinishModal() {
+            document.getElementById('finishModal').classList.remove('active');
+        }
+
+        async function confirmFinishTurno() {
+            const completati = allTasks.filter(t => t.completed).length;
+            const totali = allTasks.length;
+            
+            try {
+                const res = await fetch(`${API_BASE}/turni/chiudi`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        dipendente_nome: currentDipendente,
+                        turno_id: currentTurno ? currentTurno.turno_id : null,
+                        task_completati: completati,
+                        task_totali: totali
+                    })
+                });
+
+                const result = await res.json();
+                
+                if (result.id) {
+                    closeFinishModal();
+                    turnoChiuso = true;
+                    
+                    const now = new Date();
+                    const ora = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+                    
+                    document.getElementById('tasksContainer').style.display = 'none';
+                    document.getElementById('statsBox').style.display = 'none';
+                    document.getElementById('turnoChiusoBox').style.display = 'block';
+                    
+                    document.getElementById('chiusuraInfo').innerHTML = `
+                        Hai chiuso il turno alle <strong>${ora}</strong><br>
+                        Task completati: <strong>${completati}/${totali}</strong>
+                    `;
+                } else {
+                    alert('⚠️ Errore nella chiusura del turno');
+                }
+
+            } catch (error) {
+                console.error('Errore chiusura turno:', error);
+                alert('⚠️ Errore di connessione');
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

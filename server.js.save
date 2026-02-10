@@ -1,0 +1,74 @@
+            COUNT(t.id) as num_turni,
+            SUM(t.ore_normali * d.paga_oraria) as comp_normali,
+            SUM(t.ore_straordinari * d.paga_oraria) as comp_straordinari,
+            SUM((t.ore_normali + t.ore_straordinari) * d.paga_oraria) as comp_totale
+        FROM dipendenti d
+        LEFT JOIN turni t ON d.id = t.dipendente_id 
+            AND strftime('%Y', t.data) = ? 
+            AND strftime('%m', t.data) = ?
+        WHERE d.id = ?
+    `;
+    
+    db.get(query, [anno, meseFormatted, dipendente_id], (err, row) => {
+        if (err) return res.status(500).json({error: err.message});
+        
+        // Controlla se esiste già un riepilogo salvato
+        db.get("SELECT * FROM riepilogo_mensile WHERE dipendente_id=? AND anno=? AND mese=?", 
+            [dipendente_id, anno, mese], (err, saved) => {
+                if (err) return res.status(500).json({error: err.message});
+                res.json({...row, saved: saved || null});
+            });
+    });
+});
+
+// SALVA RIEPILOGO
+app.post('/api/riepilogo/salva', (req, res) => {
+    const {dipendente_id, anno, mese, ore_normali, ore_straordinari, compenso_lordo, contributi, netto_da_pagare} = req.body;
+    
+    db.run(`INSERT OR REPLACE INTO riepilogo_mensile 
+            (dipendente_id, anno, mese, ore_normali, ore_straordinari, compenso_lordo, contributi, netto_da_pagare, salvato_il) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [dipendente_id, anno, mese, ore_normali, ore_straordinari, compenso_lordo, contributi, netto_da_pagare],
+        function(err) {
+            if (err) return res.status(500).json({error: err.message});
+            res.json({message: 'Riepilogo salvato', id: this.lastID});
+        });
+});
+
+// STORICO RIEPILOGO
+app.get('/api/riepilogo/storico/:dipendente_id', (req, res) => {
+    db.all("SELECT * FROM riepilogo_mensile WHERE dipendente_id=? ORDER BY anno DESC, mese DESC", 
+        [req.params.dipendente_id], (err, rows) => {
+            if (err) return res.status(500).json({error: err.message});
+            res.json(rows);
+        });
+});
+
+// RIEPILOGO SETTIMANALE
+app.get('/api/riepilogo/settimana/:data_inizio', (req, res) => {
+    const dataInizio = req.params.data_inizio;
+    
+    const query = `
+        SELECT 
+            d.id, d.nome, d.paga_oraria,
+            SUM(t.ore_normali) as tot_normali,
+            SUM(t.ore_straordinari) as tot_straordinari,
+            SUM((t.ore_normali + t.ore_straordinari) * d.paga_oraria) as comp_totale
+        FROM dipendenti d
+        LEFT JOIN turni t ON d.id = t.dipendente_id 
+            AND t.data >= date(?)
+            AND t.data < date(?, '+7 days')
+        WHERE d.attivo = 1
+        GROUP BY d.id
+        ORDER BY d.nome
+    `;
+    
+    db.all(query, [dataInizio, dataInizio], (err, rows) => {
+        if (err) return res.status(500).json({error: err.message});
+        res.json(rows);
+    });
+});
+
+app.listen(PORT, () => {
+    console.log('🚀 SERVER AVVIATO: http://localhost:' + PORT);
+});

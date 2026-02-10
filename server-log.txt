@@ -1,0 +1,4 @@
+🚀 SERVER AVVIATO: http://localhost:4052
+📋 Gestionale Turni: http://localhost:4052/index.html
+✅ Checklist Dipendenti: http://localhost:4052/checklist.html
+🔧 Admin Checklist: http://localhost:4052/admin-tasks.html

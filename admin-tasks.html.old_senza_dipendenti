@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Gestionale Checklist</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* LOGIN SCREEN */
+        #loginScreen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 9999;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .login-box h1 {
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .pin-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 24px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            letter-spacing: 10px;
+            margin-bottom: 20px;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .error-msg {
+            color: #e74c3c;
+            margin-top: 15px;
+        }
+
+        /* MAIN CONTENT */
+        #mainContent {
+            display: none;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .filters {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .summary-box {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #2196F3;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- LOGIN -->
+    <div id="loginScreen">
+        <div class="login-box">
+            <h1>🔐 Admin Login</h1>
+            <input type="password" 
+                   class="pin-input" 
+                   id="pinInput" 
+                   placeholder="000000" 
+                   maxlength="6"
+                   inputmode="numeric">
+            <button class="login-btn" onclick="checkLogin()">ACCEDI</button>
+            <div class="error-msg" id="errorMsg"></div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="mainContent">
+        <div class="header">
+            <h1>🔧 Admin - Gestionale Checklist</h1>
+            <p>Gestione task e monitoraggio completamenti</p>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+                <button class="tab" onclick="switchTab('tasks')">✅ Gestione Task</button>
+                <button class="tab" onclick="switchTab('storico')">📋 Storico Completo</button>
+            </div>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div id="dashboard" class="tab-content active">
+            <h2>📊 Dashboard Oggi</h2>
+            <div class="stats-grid" id="statsGrid">
+                <div class="loading">Caricamento...</div>
+            </div>
+
+            <h3 style="margin-top: 30px;">❌ Task Non Completati Oggi</h3>
+            <div id="incompleteList">
+                <div class="loading">Caricamento...</div>
+            </div>
+
+            <h3 style="margin-top: 30px;">✅ Completamenti di Oggi</h3>
+            <div id="completedToday">
+                <div class="loading">Caricamento...</div>
+            </div>
+        </div>
+
+        <!-- GESTIONE TASK -->
+        <div id="tasks" class="tab-content">
+            <h2>✅ Gestione Task</h2>
+            
+            <div class="form-group">
+                <label>Nome Task</label>
+                <input type="text" id="taskNome" placeholder="es: Pulizia Bagni">
+            </div>
+
+            <div class="form-group">
+                <label>Categoria</label>
+                <select id="taskCategoria"></select>
+            </div>
+
+            <div class="form-group">
+                <label>Postazione</label>
+                <select id="taskPostazione">
+                    <option value="banco">Banco</option>
+                    <option value="cucina">Cucina</option>
+                    <option value="qualsiasi">Qualsiasi</option>
+                </select>
+            </div>
+
+            <button class="btn btn-success" onclick="addTask()">➕ Aggiungi Task</button>
+
+            <h3 style="margin-top: 30px;">📋 Lista Task Attivi</h3>
+            <div id="tasksList">
+                <div class="loading">Caricamento...</div>
+            </div>
+        </div>
+
+        <!-- STORICO COMPLETO -->
+        <div id="storico" class="tab-content">
+            <h2>📋 Storico Completamenti</h2>
+            
+            <div class="filters">
+                <h3>🔍 Filtri</h3>
+                <div class="filters-grid">
+                    <div class="form-group">
+                        <label>Data Inizio</label>
+                        <input type="date" id="filterDataInizio">
+                    </div>
+                    <div class="form-group">
+                        <label>Data Fine</label>
+                        <input type="date" id="filterDataFine">
+                    </div>
+                    <div class="form-group">
+                        <label>Dipendente</label>
+                        <select id="filterDipendente">
+                            <option value="">Tutti</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoria</label>
+                        <select id="filterCategoria">
+                            <option value="">Tutte</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="loadStorico()" style="margin-top: 15px;">🔍 Cerca</button>
+                <button class="btn btn-success" onclick="exportStorico()" style="margin-top: 15px;">📥 Esporta CSV</button>
+            </div>
+
+            <div id="storicoSummary" style="display:none;">
+                <div class="summary-box">
+                    <h3>📊 Riepilogo</h3>
+                    <div id="summaryContent"></div>
+                </div>
+            </div>
+
+            <div id="storicoResults">
+                <p style="color: #666; text-align: center; padding: 40px;">Seleziona i filtri e clicca su "Cerca"</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin + '/api';
+        let categories = [];
+        let allCompletions = [];
+
+        // LOGIN
+        function checkLogin() {
+            const pin = document.getElementById('pinInput').value;
+            fetch(`${API_BASE}/admin/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({pin})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                    sessionStorage.setItem('admin_logged', 'true');
+                    init();
+                } else {
+                    document.getElementById('errorMsg').textContent = '❌ PIN errato';
+                    document.getElementById('pinInput').value = '';
+                }
+            });
+        }
+
+        document.getElementById('pinInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkLogin();
+        });
+
+        if (sessionStorage.getItem('admin_logged') === 'true') {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            init();
+        }
+
+        // INIT
+        async function init() {
+            await loadCategories();
+            loadDashboard();
+            loadTasksList();
+            setupFilters();
+        }
+
+        // SWITCH TAB
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+
+            if (tabName === 'dashboard') loadDashboard();
+            if (tabName === 'tasks') loadTasksList();
+        }
+
+        // LOAD CATEGORIES
+        async function loadCategories() {
+            const res = await fetch(`${API_BASE}/task-categories`);
+            categories = await res.json();
+            
+            const selects = ['taskCategoria', 'filterCategoria'];
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (selectId === 'filterCategoria') {
+                    select.innerHTML = '<option value="">Tutte</option>';
+                } else {
+                    select.innerHTML = '';
+                }
+                categories.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat.id;
+                    opt.textContent = cat.nome;
+                    select.appendChild(opt);
+                });
+            });
+        }
+
+        // DASHBOARD
+        async function loadDashboard() {
+            const oggi = new Date().toISOString().split('T')[0];
+            
+            // Stats
+            const completions = await fetch(`${API_BASE}/tasks/completions/${oggi}`).then(r => r.json());
+            const incomplete = await fetch(`${API_BASE}/tasks/incomplete/${oggi}`).then(r => r.json());
+            
+            const dipendenti = [...new Set(completions.map(c => c.dipendente_nome))];
+            
+            const statsHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Task Completati</div>
+                    <div class="stat-value">${completions.length}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Task da Fare</div>
+                    <div class="stat-value">${incomplete.length}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Dipendenti Attivi</div>
+                    <div class="stat-value">${dipendenti.length}</div>
+                </div>
+            `;
+            document.getElementById('statsGrid').innerHTML = statsHTML;
+
+            // Incomplete
+            if (incomplete.length === 0) {
+                document.getElementById('incompleteList').innerHTML = '<p style="color: #27ae60; text-align: center; padding: 20px;">✅ Tutti i task sono completati!</p>';
+            } else {
+                const incompleteHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Categoria</th>
+                                <th>Postazione</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${incomplete.map(t => `
+                                <tr>
+                                    <td>${t.task_nome}</td>
+                                    <td><span class="badge" style="background-color: ${t.colore}">${t.categoria_nome}</span></td>
+                                    <td>${t.postazione}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                document.getElementById('incompleteList').innerHTML = incompleteHTML;
+            }
+
+            // Completed
+            if (completions.length === 0) {
+                document.getElementById('completedToday').innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">Nessun completamento oggi</p>';
+            } else {
+                const completedHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ora</th>
+                                <th>Task</th>
+                                <th>Categoria</th>
+                                <th>Dipendente</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${completions.map(c => `
+                                <tr>
+                                    <td>${c.ora}</td>
+                                    <td>${c.task_nome}</td>
+                                    <td><span class="badge" style="background-color: ${c.colore}">${c.categoria_nome}</span></td>
+                                    <td><strong>${c.dipendente_nome}</strong></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                document.getElementById('completedToday').innerHTML = completedHTML;
+            }
+        }
+
+        // TASKS MANAGEMENT
+        async function loadTasksList() {
+            const res = await fetch(`${API_BASE}/tasks`);
+            const tasks = await res.json();
+            
+            if (tasks.length === 0) {
+                document.getElementById('tasksList').innerHTML = '<p>Nessun task attivo</p>';
+                return;
+            }
+
+            const byCategory = {};
+            tasks.forEach(t => {
+                if (!byCategory[t.categoria_nome]) {
+                    byCategory[t.categoria_nome] = {colore: t.colore, tasks: []};
+                }
+                byCategory[t.categoria_nome].tasks.push(t);
+            });
+
+            let html = '';
+            for (const [catName, catData] of Object.entries(byCategory)) {
+                html += `
+                    <h4 style="margin-top: 20px;"><span class="badge" style="background-color: ${catData.colore}">${catName}</span></h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Postazione</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${catData.tasks.map(t => `
+                                <tr>
+                                    <td>${t.nome}</td>
+                                    <td>${t.postazione}</td>
+                                    <td><button class="btn btn-danger" onclick="deleteTask(${t.id})">🗑️ Elimina</button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+
+            document.getElementById('tasksList').innerHTML = html;
+        }
+
+        async function addTask() {
+            const nome = document.getElementById('taskNome').value;
+            const categoria_id = document.getElementById('taskCategoria').value;
+            const postazione = document.getElementById('taskPostazione').value;
+
+            if (!nome || !categoria_id) {
+                alert('Compila tutti i campi!');
+                return;
+            }
+
+            const res = await fetch(`${API_BASE}/tasks`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({nome, categoria_id, postazione})
+            });
+
+            if (res.ok) {
+                alert('✅ Task aggiunto!');
+                document.getElementById('taskNome').value = '';
+                loadTasksList();
+            }
+        }
+
+        async function deleteTask(id) {
+            if (!confirm('Eliminare questo task?')) return;
+            
+            const res = await fetch(`${API_BASE}/tasks/${id}`, {method: 'DELETE'});
+            if (res.ok) {
+                alert('✅ Task eliminato!');
+                loadTasksList();
+            }
+        }
+
+        // STORICO COMPLETO
+        function setupFilters() {
+            const oggi = new Date();
+            const settimaniFa = new Date();
+            settimaniFa.setDate(oggi.getDate() - 7);
+
+            document.getElementById('filterDataInizio').value = settimaniFa.toISOString().split('T')[0];
+            document.getElementById('filterDataFine').value = oggi.toISOString().split('T')[0];
+        }
+
+        async function loadStorico() {
+            const dataInizio = document.getElementById('filterDataInizio').value;
+            const dataFine = document.getElementById('filterDataFine').value;
+            const dipendente = document.getElementById('filterDipendente').value;
+            const categoria = document.getElementById('filterCategoria').value;
+
+            if (!dataInizio || !dataFine) {
+                alert('Seleziona le date!');
+                return;
+            }
+
+            document.getElementById('storicoResults').innerHTML = '<div class="loading">Caricamento...</div>';
+
+            // Carica tutti i completamenti nel range di date
+            const start = new Date(dataInizio);
+            const end = new Date(dataFine);
+            allCompletions = [];
+
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                const dateStr = d.toISOString().split('T')[0];
+                const res = await fetch(`${API_BASE}/tasks/completions/${dateStr}`);
+                const data = await res.json();
+                allCompletions.push(...data);
+            }
+
+            // Applica filtri
+            let filtered = allCompletions;
+
+            if (dipendente) {
+                filtered = filtered.filter(c => c.dipendente_nome === dipendente);
+            }
+
+            if (categoria) {
+                const catName = categories.find(cat => cat.id == categoria)?.nome;
+                filtered = filtered.filter(c => c.categoria_nome === catName);
+            }
+
+            // Mostra risultati
+            displayStorico(filtered);
+            displaySummary(filtered);
+
+            // Popola select dipendenti con nomi unici
+            const dipendentiUnici = [...new Set(allCompletions.map(c => c.dipendente_nome))].sort();
+            const selectDip = document.getElementById('filterDipendente');
+            selectDip.innerHTML = '<option value="">Tutti</option>';
+            dipendentiUnici.forEach(nome => {
+                const opt = document.createElement('option');
+                opt.value = nome;
+                opt.textContent = nome;
+                selectDip.appendChild(opt);
+            });
+        }
+
+        function displayStorico(completions) {
+            if (completions.length === 0) {
+                document.getElementById('storicoResults').innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">Nessun completamento trovato</p>';
+                return;
+            }
+
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Ora</th>
+                            <th>Task</th>
+                            <th>Categoria</th>
+                            <th>Dipendente</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${completions.map(c => `
+                            <tr>
+                                <td>${c.data}</td>
+                                <td>${c.ora}</td>
+                                <td>${c.task_nome}</td>
+                                <td><span class="badge" style="background-color: ${c.colore}">${c.categoria_nome}</span></td>
+                                <td><strong>${c.dipendente_nome}</strong></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            document.getElementById('storicoResults').innerHTML = html;
+        }
+
+        function displaySummary(completions) {
+            // Raggruppa per dipendente
+            const byDipendente = {};
+            completions.forEach(c => {
+                if (!byDipendente[c.dipendente_nome]) {
+                    byDipendente[c.dipendente_nome] = {};
+                }
+                if (!byDipendente[c.dipendente_nome][c.categoria_nome]) {
+                    byDipendente[c.dipendente_nome][c.categoria_nome] = 0;
+                }
+                byDipendente[c.dipendente_nome][c.categoria_nome]++;
+            });
+
+            let summaryHTML = `
+                <div class="summary-item">
+                    <strong>Totale Completamenti:</strong>
+                    <strong>${completions.length}</strong>
+                </div>
+            `;
+
+            for (const [dip, categories] of Object.entries(byDipendente)) {
+                const totale = Object.values(categories).reduce((a, b) => a + b, 0);
+                summaryHTML += `
+                    <div class="summary-item">
+                        <div>
+                            <strong>${dip}</strong><br>
+                            <small>${Object.entries(categories).map(([cat, count]) => `${cat}: ${count}`).join(', ')}</small>
+                        </div>
+                        <strong>${totale} task</strong>
+                    </div>
+                `;
+            }
+
+            document.getElementById('summaryContent').innerHTML = summaryHTML;
+            document.getElementById('storicoSummary').style.display = 'block';
+        }
+
+        function exportStorico() {
+            if (allCompletions.length === 0) {
+                alert('Nessun dato da esportare!');
+                return;
+            }
+
+            const dipendente = document.getElementById('filterDipendente').value;
+            const categoria = document.getElementById('filterCategoria').value;
+
+            let filtered = allCompletions;
+            if (dipendente) filtered = filtered.filter(c => c.dipendente_nome === dipendente);
+            if (categoria) {
+                const catName = categories.find(cat => cat.id == categoria)?.nome;
+                filtered = filtered.filter(c => c.categoria_nome === catName);
+            }
+
+            let csv = 'Data,Ora,Task,Categoria,Dipendente\n';
+            filtered.forEach(c => {
+                csv += `${c.data},${c.ora},${c.task_nome},${c.categoria_nome},${c.dipendente_nome}\n`;
+            });
+
+            const blob = new Blob([csv], {type: 'text/csv'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `storico_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
